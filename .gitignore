@@ -1,0 +1,5 @@
+*.exe
+main
+httpClient
+httpServer
+*.o
