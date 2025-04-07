@@ -8,32 +8,9 @@
 
 #include "../libs/http-server.hpp"
 #include "../libs/string-helpers.hpp"
+#include "../libs/server-exception.hpp"
 
 using namespace cas;
-
-// std::vector<std::string> split(std::string text, char delimiter)
-// {
-//     std::vector<std::string> result;
-//     size_t start = 0, end = 0;
-
-//     for (size_t i = 0; i < text.size(); ++i)
-//     {
-//         if (text[i] == delimiter)
-//         {
-//             end = i;
-
-//             result.push_back(text.substr(start, end - start));
-
-//             start = i;
-//         }
-//     }
-
-//     return result;
-// }
-
-// ==============
-// | HttpServer |
-// ==============
 
 HttpServer::HttpServer()
 {
@@ -49,7 +26,7 @@ HttpServerContext HttpServer::get_ctx()
 {
     HttpServerContext result;
 
-    int client_fd;
+    int clientFd;
     sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
@@ -131,9 +108,9 @@ HttpServerContext HttpServer::get_ctx()
         }        
     }
 
-    client_fd = accept(_serverFd, (sockaddr*)&address, (socklen_t*)&addrlen);
+    clientFd = accept(_serverFd, (sockaddr*)&address, (socklen_t*)&addrlen);
 
-    if (client_fd < 0)
+    if (clientFd < 0)
     {
         switch (errno)
         {
@@ -149,17 +126,15 @@ HttpServerContext HttpServer::get_ctx()
         case ENOBUFS: throw ServerException("Failed to accept: no buffer space is available.");
         case ENOMEM: throw ServerException("Failed to accept: there was insufficient memory available to complete the operation.");
         case EPROTO: throw ServerException("Failed to accept: a protocol error has occurred; for example, the STREAMS protocol stack has not been initialized.");
-        default: throw ServerException("Failed to accept an incoming message. (" + std::to_string(client_fd) + ")");
+        default: throw ServerException("Failed to accept an incoming message. (" + std::to_string(clientFd) + ")");
         }
     }
 
     char buffer[1024] = {0};
-    read(client_fd, buffer, 1024);
+    read(clientFd, buffer, 1024);
     
-    result.get_req().parse(buffer, 1024);
-    
-    // std::string response = "Hello from server!";
-    // send(client_fd, response.c_str(), response.size(), 0);
+    result.request.parse(buffer, 1024);
+    result.response.set_client_fd(clientFd);
 
     return result;
 }
@@ -167,124 +142,4 @@ HttpServerContext HttpServer::get_ctx()
 std::future<HttpServerContext> HttpServer::get_ctx_async()
 {
     return std::async(std::launch::async, &HttpServer::get_ctx, this);
-}
-
-// =====================
-// | HttpServerContext |
-// =====================
-
-cas::HttpServerContext::HttpServerContext()
-{ }
-
-cas::HttpServerContext::~HttpServerContext()
-{ }
-
-cas::HttpServerContext::HttpServerContext(const HttpServerContext& other)
-{
-    _request = other._request;
-    _response = other._response;
-}
-
-HttpServerContext& cas::HttpServerContext::operator=(const HttpServerContext& other)
-{
-    _request = other._request;
-    _response = other._response;
-    return *this;
-}
-
-HttpRequest& cas::HttpServerContext::get_req()
-{
-    return _request;
-}
-
-HttpResponse& cas::HttpServerContext::get_res()
-{
-    return _response;
-}
-
-std::string cas::HttpRequest::get_method() const
-{
-    return _method;
-}
-
-std::string cas::HttpRequest::get_path() const
-{
-    return _path;
-}
-
-std::string cas::HttpRequest::get_protocol() const
-{
-    return _protocol;
-}
-
-std::map<std::string, std::string> cas::HttpRequest::get_headers() const
-{
-    return _headers;
-}
-
-std::string cas::HttpRequest::get_body() const
-{
-    return _body;
-}
-
-void cas::HttpRequest::parse(const char *buffer, size_t length)
-{
-    std::string content(buffer, length);
-
-    std::istringstream iss(content);
-
-    std::string firstLine;
-    std::getline(iss, firstLine);
-
-    auto firstLineSplits = strhelp::split(firstLine, ' ');
-
-    if (firstLineSplits.size() >= 1)
-    {
-        _method = firstLineSplits[0];
-    }
-
-    if (firstLineSplits.size() >= 2)
-    {
-        _path = firstLineSplits[1];
-    }
-
-    if (firstLineSplits.size() >= 3)
-    {
-        _protocol = firstLineSplits[2];
-    }
-
-    std::string header;
-    std::getline(iss, header);
-
-    while (header.size() > 0 && !iswspace(header[0]))
-    {
-        auto headerSplits = strhelp::split(header, ':');
-
-        if (headerSplits.size() == 2)
-        {
-            _headers[headerSplits[0]] = headerSplits[1];
-        }
-
-        std::getline(iss, header);
-    }
-
-    std::string bodyLine;
-    std::ostringstream bodyBuilder;
-
-    while (std::getline(iss, bodyLine))
-    {
-        bodyBuilder << bodyLine;
-    }
-
-    _body = bodyBuilder.str();
-}
-
-void cas::HttpResponse::set_client_fd(int client_fd)
-{
-    _clientFd = client_fd;
-}
-
-void cas::HttpResponse::send_and_close()
-{
-    close(_clientFd);
 }
