@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for our server http logic.
+ */
+
 #include "../libs/http-server.hpp"
 
 #include <iostream>
@@ -42,18 +49,23 @@ HttpServer &cas::HttpServer::operator=(const HttpServer &other)
     return *this;
 }
 
+/// @brief Gets an HTTP context for a single transaction. Blocks until a client request is available.
+/// @return The HttpServerContext.
+/// @throw ServerException
 HttpServerContext HttpServer::get_ctx()
 {
     HttpServerContext result;
 
     int clientFd;
     sockaddr_in address;
-    int opt = 1;
     int addrlen = sizeof(address);
 
+    // if a server socket has not been created already,
+    // create a server socket and start listening for 
+    // client connections
     if (_serverFd <= 0)
     {
-        _serverFd = socket(AF_INET, SOCK_STREAM, 0);
+        _serverFd = socket(AF_INET, SOCK_STREAM, 0); // use IPv4 and TCP
 
         if (_serverFd <= 0)
         {
@@ -71,12 +83,16 @@ HttpServerContext HttpServer::get_ctx()
             }        
         }
 
+        // set the socket level options (SOL_SOCKET) to allow for fast restarts (SO_REUSEADDR),
+        // and multiple processes/threads sharing the same port (SO_REUSEPORT)
+        int opt = 1; // enable options
         setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
-        address.sin_family = AF_INET;
-        address.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-        address.sin_port = htons(_port);
+        address.sin_family = AF_INET; // use IPv4
+        address.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0 (coming from any address)
+        address.sin_port = htons(_port); // set the port to listen on
 
+        // bind the server socket to the newly created address
         if (bind(_serverFd, (sockaddr*)&address, addrlen) < 0)
         {
             switch (errno)
@@ -91,43 +107,34 @@ HttpServerContext HttpServer::get_ctx()
             case ENOBUFS: throw ServerException("Server failed to bind the socket: insufficient resources were available to complete the call.");
             case ENOTSOCK: throw ServerException("Server failed to bind the socket: the socket argument does not refer to a socket.");
             case EOPNOTSUPP: throw ServerException("Server failed to bind the socket: the socket type of the specified socket does not support binding to an address.");
-
-            // IF AF_UNIX
-            // case EACCES: throw ServerException("Server failed to bind the socket: a component of the path prefix denies search permission, or the requested name requires writing in a directory with a mode that denies write permission.");
-            // case EDESTADDRREQ: throw ServerException("Server failed to bind the socket: the address argument is a null pointer.");
-            // case EISDIR: throw ServerException("Server failed to bind the socket: the address argument is a null pointer.");
-            // case EIO: throw ServerException("Server failed to bind the socket: an I/O error occurred.");
-            // case ELOOP: throw ServerException("Server failed to bind the socket: a loop exists in symbolic links encountered during resolution of the pathname in address.");
-            // case ENAMETOOLONG: throw ServerException("Server failed to bind the socket: the length of a component of a pathname is longer than {NAME_MAX}.");
-            // case ENOENT: throw ServerException("Server failed to bind the socket: The pathname in address contains at least one non- <slash> character and ends with one or more trailing <slash> characters. If the pathname without the trailing <slash> characters would name an existing file, an [ENOENT] error shall not occur.");
-            // case ENOTDIR: throw ServerException("Server failed to bind the socket: The pathname in address contains at least one non- <slash> character and ends with one or more trailing <slash> characters. If the pathname without the trailing <slash> characters would name an existing file, an [ENOENT] error shall not occur.");
-            // case EROFS: throw ServerException("Server failed to bind the socket: the name would reside on a read-only file system.");
-            
             case EACCES: throw ServerException("Server failed to bind the socket: the specified address is protected and the current user does not have permission to bind to it.");
             case EISCONN: throw ServerException("Server failed to bind the socket: the socket is already connected.");
             case ELOOP: throw ServerException("Server failed to bind the socket: more than {SYMLOOP_MAX} symbolic links were encountered during resolution of the pathname in address.");
             case ENAMETOOLONG: throw ServerException("Server failed to bind the socket: the length of a pathname exceeds {PATH_MAX}, or pathname resolution of a symbolic link produced an intermediate result with a length that exceeds {PATH_MAX}.");
-
             default: throw ServerException("Server failed to bind the socket."); 
             }
         }
-    }
 
-    if (listen(_serverFd, 3) < 0)
-    {
-        switch (errno)
+        // start listening for client connections
+        // up to a max of SOMAXCONN are allowed
+        // in the backlog before accept() is called
+        if (listen(_serverFd, SOMAXCONN) < 0)
         {
-        case EBADF: throw ServerException("Server failed to start listening: the socket argument is not a valid file descriptor.");
-        case EDESTADDRREQ: throw ServerException("Server failed to start listening: the socket is not bound to a local address, and the protocol does not support listening on an unbound socket.");
-        case EINVAL: throw ServerException("Server failed to start listening: the socket is already connected. Or, the socket has been shut down.");
-        case ENOTSOCK: throw ServerException("Server failed to start listening: the socket argument does not refer to a socket.");
-        case EOPNOTSUPP: throw ServerException("Server failed to start listening: the socket protocol does not support listen().");
-        case EACCES: throw ServerException("Server failed to start listening: the calling process does not have appropriate privileges.");
-        case ENOBUFS: throw ServerException("Server failed to start listening: insufficient resources are available in the system to complete the call.");
-        default: throw ServerException("Server failed to start listening.");
-        }        
+            switch (errno)
+            {
+            case EBADF: throw ServerException("Server failed to start listening: the socket argument is not a valid file descriptor.");
+            case EDESTADDRREQ: throw ServerException("Server failed to start listening: the socket is not bound to a local address, and the protocol does not support listening on an unbound socket.");
+            case EINVAL: throw ServerException("Server failed to start listening: the socket is already connected. Or, the socket has been shut down.");
+            case ENOTSOCK: throw ServerException("Server failed to start listening: the socket argument does not refer to a socket.");
+            case EOPNOTSUPP: throw ServerException("Server failed to start listening: the socket protocol does not support listen().");
+            case EACCES: throw ServerException("Server failed to start listening: the calling process does not have appropriate privileges.");
+            case ENOBUFS: throw ServerException("Server failed to start listening: insufficient resources are available in the system to complete the call.");
+            default: throw ServerException("Server failed to start listening.");
+            }        
+        }
     }
 
+    // accept any incoming client connections.
     clientFd = accept(_serverFd, (sockaddr*)&address, (socklen_t*)&addrlen);
 
     if (clientFd < 0)
@@ -151,9 +158,10 @@ HttpServerContext HttpServer::get_ctx()
     }
 
     std::ostringstream oss;
-
     char buffer[_bufferSize] = {0};
 
+    // read the incoming client connection up to a max of _bufferSize in bytes.
+    // TODO: if the buffer is not large enough an error will most likely be thrown?
     auto readResult = read(clientFd, buffer, _bufferSize - 1);
     buffer[_bufferSize - 1] = '\0';
     oss << buffer;
@@ -180,27 +188,36 @@ HttpServerContext HttpServer::get_ctx()
         }
     }
     
+    // Parse the client connection assuming HTTP protocol
     result.request.parse(oss.str());
-    result.response.set_client_fd(clientFd);
 
+    result.response.set_client_fd(clientFd);
     return result;
 }
 
+/// @brief Gets an HTTP context for a single transaction. If awaited, blocks until a client request is available.
+/// @return A promise that returns the HttpServerContext.
+/// @throw ServerException 
 std::future<HttpServerContext> HttpServer::get_ctx_async()
 {
     return std::async(std::launch::async, &HttpServer::get_ctx, this);
 }
 
+/// @brief Set the server's port.
+/// @param port The port for the server to use.
 void cas::HttpServer::set_port(const int port)
 {
     _port = port;
 }
 
+/// @brief Set the server's buffer size for reading client requests.
+/// @param size The buffer size.
 void cas::HttpServer::set_buffer_size(const int size)
 {
     _bufferSize = size;
 }
 
+/// @brief Closes the server's socket.
 void cas::HttpServer::shutdown()
 {
     close(_serverFd);

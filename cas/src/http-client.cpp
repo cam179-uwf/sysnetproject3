@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for our client http logic.
+ */
+
 #include "../libs/http-client.hpp"
 
 #include <sstream>
@@ -13,6 +20,38 @@
 
 using namespace cas;
 
+HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
+{
+    _host = host;
+    _port = port;
+    _bufferSize = bufferSize;
+}
+
+HttpClient::~HttpClient()
+{
+    
+}
+
+HttpClient::HttpClient(const HttpClient& other)
+{
+    _host = other._host;
+    _port = other._port;
+}
+
+HttpClient& HttpClient::operator=(const HttpClient& other)
+{
+    if (this != &other)
+    {
+        _host = other._host;
+        _port = other._port;
+    }
+    return *this;
+}
+
+/// @brief Builds a string that becomes the raw HTTP request that is sent over the network.
+/// @param method The method to use for the HTTP request.
+/// @param request The HTTP request.
+/// @return A string representing the raw HTTP request.
 std::string build_http_request_str(const std::string& method, const HttpClientRequest& request)
 {
     std::ostringstream oss;
@@ -34,6 +73,9 @@ std::string build_http_request_str(const std::string& method, const HttpClientRe
     return oss.str();
 }
 
+/// @brief Parses an HTTP response.
+/// @param response The raw HTTP response to parse.
+/// @return An HttpClientResponse.
 HttpClientResponse parse(const std::string& response)
 {
     HttpClientResponse res;
@@ -58,8 +100,7 @@ HttpClientResponse parse(const std::string& response)
         }
         catch (const std::exception& ex)
         {
-            // TODO: probably shouldn't throw lol
-            throw ClientException(ex.what());
+            res.statusCode = -1;
         }
     }
 
@@ -96,9 +137,15 @@ HttpClientResponse parse(const std::string& response)
     return res;
 }
 
+/// @brief Makes an HTTP request using the provided method and request.
+/// @param method The HTTP method to use.
+/// @param request The HTTP request.
+/// @return A HttpClientResponse.
+/// @throw ClientException
 HttpClientResponse HttpClient::make_request(const std::string& method, const HttpClientRequest& request)
 {
-    int clientFd = socket(AF_INET, SOCK_STREAM, 0);
+    // open a socket for the client
+    int clientFd = socket(AF_INET, SOCK_STREAM, 0); // use IPv4 and TCP
 
     if (clientFd < 0)
     {
@@ -117,9 +164,14 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     }
 
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(_port);
+    serverAddr.sin_family = AF_INET; // use IPv4
+    serverAddr.sin_port = htons(_port); // set the port number
 
+    // convert from presentation format of an Internet number in buffer
+    // starting at CP to the binary network format and store result for
+    // interface type AF in buffer starting at BUF.
+    // 
+    // stores the result in serverAddr.sin_addr
     int inetPtonResult = inet_pton(AF_INET, _host.c_str(), &serverAddr.sin_addr);
 
     if (inetPtonResult < 0)
@@ -139,6 +191,7 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
         throw ClientException("Failed to convert address: unsuccessful because the input buffer pointed to by src is not a valid string.");
     }
 
+    // try to connect to the server
     if (connect(clientFd, (sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
     {
         close(clientFd);
@@ -157,14 +210,6 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
         case ENOTSOCK: throw ClientException("Failed to connect: the socket argument does not refer to a socket.");
         case EPROTOTYPE: throw ClientException("Failed to connect: the specified address has a different type than the socket bound to the specified peer address.");
         case ETIMEDOUT: throw ClientException("Failed to connect: the attempt to connect timed out before a connection was made.");
-
-        // AF_UNIX
-        // case EIO: throw ClientException("Failed to connect: an I/O error occurred while reading from or writing to the file system.");
-        // case ELOOP: throw ClientException("Failed to connect: a loop exists in symbolic links encountered during resolution of the pathname in address.");
-        // case ENAMETOOLONG: throw ClientException("Failed to connect: the length of a component of a pathname is longer than {NAME_MAX}.");
-        // case ENOENT: throw ClientException("Failed to connect: a component of the pathname does not name an existing file or the pathname is an empty string.");
-        // case ENOTDIR: throw ClientException("Failed to connect: a component of the path prefix of the pathname in address names an existing file that is neither a directory nor a symbolic link to a directory, or the pathname in address contains at least one non- <slash> character and ends with one or more trailing <slash> characters and the last pathname component names an existing file that is neither a directory nor a symbolic link to a directory.");
-
         case EACCES: throw ClientException("Failed to connect: search permission is denied for a component of the path prefix; or write access to the named socket is denied.");
         case EADDRINUSE: throw ClientException("Failed to connect: attempt to establish a connection that uses addresses that are already in use.");
         case ECONNRESET: throw ClientException("Failed to connect: remote host reset the connection request.");
@@ -181,6 +226,7 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
 
     std::string content = build_http_request_str(method, request);
 
+    // send request to the server
     if (send(clientFd, content.c_str(), content.size(), 0) < 0)
     {
         close(clientFd);
@@ -211,6 +257,7 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     char buffer[_bufferSize];
     ssize_t n;
 
+    // read response from the server not limited to _bufferSize
     while ((n = read(clientFd, buffer, _bufferSize - 1)) > 0)
     {
         if (n < 0)
@@ -244,44 +291,25 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     return parse(oss.str());
 }
 
-HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
-{
-    _host = host;
-    _port = port;
-    _bufferSize = bufferSize;
-}
-
-HttpClient::~HttpClient()
-{
-    
-}
-
-HttpClient::HttpClient(const HttpClient& other)
-{
-    _host = other._host;
-    _port = other._port;
-}
-
-HttpClient& HttpClient::operator=(const HttpClient& other)
-{
-    if (this != &other)
-    {
-        _host = other._host;
-        _port = other._port;
-    }
-    return *this;
-}
-
+/// @brief Makes a GET request.
+/// @param request The HTTP request.
+/// @return A promise that returns an HttpClientRequest.
+/// @throw ClientException
 std::future<HttpClientResponse> HttpClient::get_async(const HttpClientRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "GET", request);
 }
 
+/// @brief Makes a POST request.
+/// @param request The HTTP request.
+/// @return A promise that returns an HttpClientRequest.
+/// @throw ClientException
 std::future<HttpClientResponse> HttpClient::post_async(const HttpClientRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "POST", request);
 }
 
+/// @return A string representing the raw HTTP response.
 std::string cas::HttpClientResponse::to_string()
 {
     std::ostringstream oss;
@@ -303,6 +331,7 @@ std::string cas::HttpClientResponse::to_string()
     return oss.str();
 }
 
+/// @return A string representing the raw HTTP request.
 std::string cas::HttpClientRequest::to_string()
 {
     std::ostringstream oss;

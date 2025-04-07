@@ -1,24 +1,15 @@
 ARGS = -g -Wall -std=c++11
 
-main: server client
+main: cas-lib server client
 
-server: httpServer.cpp http-server.o string-helpers.o http-server-context.o
-	g++ $(ARGS) $^ -o server
+server: httpServer.cpp
+	g++ $(ARGS) $< cas/http-server.o cas/string-helpers.o cas/http-server-context.o -o server
 
-client: httpClient.cpp http-client.o string-helpers.o
-	g++ $(ARGS) $^ -o client
+client: httpClient.cpp
+	g++ $(ARGS) $< cas/http-client.o cas/string-helpers.o -o client
 
-http-server.o: src/http-server.cpp
-	g++ $(ARGS) -c $<
-
-http-server-context.o: src/http-server-context.cpp
-	g++ $(ARGS) -c $<
-
-string-helpers.o: src/string-helpers.cpp
-	g++ $(ARGS) -c $<
-
-http-client.o: src/http-client.cpp
-	g++ $(ARGS) -c $<
+cas-lib:
+	make -C ./cas -f makelib.mk
 
 clean:
-	rm server client *.o
+	rm server client *.o | make -C ./cas -f makelib.mk clean

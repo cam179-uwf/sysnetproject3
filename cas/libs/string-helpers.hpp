@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for any string extensions.
+ */
+
 #ifndef H_STRING_HELPERS
 #define H_STRING_HELPERS
 

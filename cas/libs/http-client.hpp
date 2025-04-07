@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for our client http logic.
+ */
+
 #ifndef H_HTTP_CLIENT
 #define H_HTTP_CLIENT
 

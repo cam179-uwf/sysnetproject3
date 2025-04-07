@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for our server http logic.
+ */
+
 #ifndef H_HTTP_SERVER
 #define H_HTTP_SERVER
 

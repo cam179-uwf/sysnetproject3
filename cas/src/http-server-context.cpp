@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/7/2025
+ * 
+ * This file is for our server http context logic.
+ */
+
 #include "../libs/http-server-context.hpp"
 
 #include <iostream>
@@ -11,31 +18,38 @@
 
 using namespace cas;
 
+/// @return The HTTP method.
 std::string cas::HttpRequest::get_method() const
 {
     return _method;
 }
 
+/// @return The requested path.
 std::string cas::HttpRequest::get_path() const
 {
     return _path;
 }
 
+/// @return The HTTP protocol.
 std::string cas::HttpRequest::get_protocol() const
 {
     return _protocol;
 }
 
+/// @return The HTTP headers.
 std::map<std::string, std::string> cas::HttpRequest::get_headers() const
 {
     return _headers;
 }
 
+/// @return The HTTP body.
 std::string cas::HttpRequest::get_body() const
 {
     return _body;
 }
 
+/// @brief Parses a raw HTTP request.
+/// @param content The raw HTTP request.
 void cas::HttpRequest::parse(const std::string& content)
 {
     std::istringstream iss(content);
@@ -86,6 +100,7 @@ void cas::HttpRequest::parse(const std::string& content)
     _body = bodyBuilder.str();
 }
 
+/// @return The raw HTTP request.
 std::string cas::HttpRequest::to_string()
 {
     std::ostringstream oss;
@@ -107,11 +122,15 @@ std::string cas::HttpRequest::to_string()
     return oss.str();
 }
 
+/// @brief Sets the client file descriptor.
+/// @param client_fd The client file descriptor.
 void cas::HttpResponse::set_client_fd(int client_fd)
 {
     _clientFd = client_fd;
 }
 
+/// @brief Sends the HTTP response and closes this clients socket.
+/// @return A promise.
 std::future<void> cas::HttpResponse::send_and_close_async()
 {
     return std::async([this]() {
@@ -133,6 +152,7 @@ std::future<void> cas::HttpResponse::send_and_close_async()
 
         std::string content(oss.str());
 
+        // send the response to the client
         if (send(_clientFd, content.c_str(), content.size(), 0) < 0)
         {
             switch (errno)
@@ -160,6 +180,7 @@ std::future<void> cas::HttpResponse::send_and_close_async()
     });
 }
 
+/// @return The raw HTTP response.
 std::string cas::HttpResponse::to_string()
 {
     std::ostringstream oss;
