@@ -114,8 +114,6 @@ std::future<void> cas::HttpResponse::send_and_close_async()
 
         std::string content(oss.str());
 
-        std::cout << content << std::endl;
-
         if (send(_clientFd, content.c_str(), content.size(), 0) < 0)
         {
             switch (errno)
