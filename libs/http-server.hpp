@@ -15,6 +15,7 @@ namespace cas
     class HttpServer 
     {
         int _serverFd;
+        int _port;
 
         HttpServerContext get_ctx();
 
@@ -25,6 +26,8 @@ namespace cas
         HttpServer& operator=(const HttpServer& other) = delete;
 
         std::future<HttpServerContext> get_ctx_async();
+        void set_port(const int port);
+        void shutdown();
     };
 }
 

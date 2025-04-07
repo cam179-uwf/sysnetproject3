@@ -15,6 +15,7 @@ using namespace cas;
 HttpServer::HttpServer()
 {
     _serverFd = 0;
+    _port = 8080;
 }
 
 HttpServer::~HttpServer()
@@ -55,7 +56,7 @@ HttpServerContext HttpServer::get_ctx()
 
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-        address.sin_port = htons(8080);
+        address.sin_port = htons(_port);
 
         if (bind(_serverFd, (sockaddr*)&address, addrlen) < 0)
         {
@@ -142,4 +143,14 @@ HttpServerContext HttpServer::get_ctx()
 std::future<HttpServerContext> HttpServer::get_ctx_async()
 {
     return std::async(std::launch::async, &HttpServer::get_ctx, this);
+}
+
+void cas::HttpServer::set_port(const int port)
+{
+    _port = port;
+}
+
+void cas::HttpServer::shutdown()
+{
+    close(_serverFd);
 }

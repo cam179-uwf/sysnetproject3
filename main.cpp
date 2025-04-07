@@ -2,8 +2,12 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <csignal>
+#include <cstdlib>
 
 #include "libs/http-server.hpp"
+
+cas::HttpServer g_Server;
 
 std::string read_file_contents(std::string path)
 {
@@ -33,11 +37,17 @@ std::string read_file_contents(std::string path)
 
 int main(int argc, char** argv)
 {
-    cas::HttpServer server;
+    g_Server.set_port(60001);
+
+    std::signal(SIGINT, [](int signal) {
+        std::cout << "\nDetected (Ctrl + C): shutting down server.\n";
+        g_Server.shutdown();
+        std::exit(signal);
+    });
 
     while (true)
     {
-        auto context = server.get_ctx_async().get();
+        auto context = g_Server.get_ctx_async().get();
 
         std::cout << "Accepted message from client" << std::endl;
         std::cout << "Method: " << context.request.get_method() << std::endl;
