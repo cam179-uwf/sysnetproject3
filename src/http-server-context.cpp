@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 
 #include "../libs/string-helpers.hpp"
-#include "../libs/server-exception.hpp"
+#include "../libs/exceptions.hpp"
 
 using namespace cas;
 
@@ -36,10 +36,8 @@ std::string cas::HttpRequest::get_body() const
     return _body;
 }
 
-void cas::HttpRequest::parse(const char *buffer, size_t length)
+void cas::HttpRequest::parse(const std::string& content)
 {
-    std::string content(buffer, length);
-
     std::istringstream iss(content);
 
     std::string firstLine;

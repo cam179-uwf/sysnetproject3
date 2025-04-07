@@ -16,7 +16,7 @@ namespace cas
         std::map<std::string, std::string> get_headers() const;
         std::string get_body() const;
 
-        void parse(const char* buffer, size_t length);
+        void parse(const std::string& content);
 
     private:
         std::string _method;

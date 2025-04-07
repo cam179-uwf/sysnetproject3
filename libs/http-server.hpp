@@ -16,6 +16,7 @@ namespace cas
     {
         int _serverFd;
         int _port;
+        int _bufferSize;
 
         HttpServerContext get_ctx();
 
@@ -27,6 +28,7 @@ namespace cas
 
         std::future<HttpServerContext> get_ctx_async();
         void set_port(const int port);
+        void set_buffer_size(const int size);
         void shutdown();
     };
 }
