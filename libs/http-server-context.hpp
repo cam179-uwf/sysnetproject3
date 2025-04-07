@@ -18,6 +18,8 @@ namespace cas
 
         void parse(const std::string& content);
 
+        std::string to_string();
+
     private:
         std::string _method;
         std::string _path;
@@ -27,7 +29,7 @@ namespace cas
     };
 
     /// @brief For keeping track of and sending responses
-    struct HttpResponse 
+    struct HttpResponse
     {
         std::string protocol;
         size_t statusCode;
@@ -37,6 +39,8 @@ namespace cas
 
         void set_client_fd(int client_fd);
         std::future<void> send_and_close_async();
+
+        std::string to_string();
 
     private:
         int _clientFd;

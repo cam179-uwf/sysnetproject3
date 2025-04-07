@@ -12,16 +12,34 @@
 
 using namespace cas;
 
-HttpServer::HttpServer()
+HttpServer::HttpServer(const int port, const int bufferSize)
 {
     _serverFd = 0;
-    _port = 8080;
-    _bufferSize = 1024;
+    _port = port;
+    _bufferSize = bufferSize;
 }
 
 HttpServer::~HttpServer()
 {
     close(_serverFd);
+}
+
+cas::HttpServer::HttpServer(const HttpServer &other)
+{
+    _serverFd = other._serverFd;
+    _port = other._port;
+    _bufferSize = other._bufferSize;
+}
+
+HttpServer &cas::HttpServer::operator=(const HttpServer &other)
+{
+    if (this != &other)
+    {
+        _serverFd = other._serverFd;
+        _port = other._port;
+        _bufferSize = other._bufferSize;
+    }
+    return *this;
 }
 
 HttpServerContext HttpServer::get_ctx()

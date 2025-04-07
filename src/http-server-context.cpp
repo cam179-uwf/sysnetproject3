@@ -69,7 +69,7 @@ void cas::HttpRequest::parse(const std::string& content)
 
         if (headerSplits.size() == 2)
         {
-            _headers[headerSplits[0]] = headerSplits[1];
+            _headers[headerSplits[0]] = strhelp::trim(headerSplits[1]);
         }
 
         std::getline(iss, header);
@@ -84,6 +84,27 @@ void cas::HttpRequest::parse(const std::string& content)
     }
 
     _body = bodyBuilder.str();
+}
+
+std::string cas::HttpRequest::to_string()
+{
+    std::ostringstream oss;
+
+    oss << _method << " " << _path << " " << _protocol << std::endl;
+
+    for (auto header : _headers)
+    {
+        oss << header.first << ": " << header.second << std::endl;
+    }
+
+    if (_headers.size() <= 0)
+    {
+        oss << std::endl;
+    }
+
+    oss << _body;
+
+    return oss.str();
 }
 
 void cas::HttpResponse::set_client_fd(int client_fd)
@@ -137,4 +158,25 @@ std::future<void> cas::HttpResponse::send_and_close_async()
 
         close(_clientFd);
     });
+}
+
+std::string cas::HttpResponse::to_string()
+{
+    std::ostringstream oss;
+
+    oss << protocol << " " << statusCode << " " << statusMessage << std::endl;
+
+    for (auto header : headers)
+    {
+        oss << header.first << ": " << header.second << std::endl;
+    }
+
+    if (headers.size() <= 0)
+    {
+        oss << std::endl;
+    }
+
+    oss << body;
+
+    return oss.str();
 }

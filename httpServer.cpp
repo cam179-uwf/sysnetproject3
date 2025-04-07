@@ -7,7 +7,7 @@
 
 #include "libs/http-server.hpp"
 
-cas::HttpServer g_Server;
+cas::HttpServer g_Server(60001, 1024);
 
 std::string read_file_contents(std::string path)
 {
@@ -37,8 +37,6 @@ std::string read_file_contents(std::string path)
 
 int main(int argc, char** argv)
 {
-    g_Server.set_port(60001);
-
     std::signal(SIGINT, [](int signal) {
         std::cout << "\nDetected (Ctrl + C): shutting down server.\n";
         g_Server.shutdown();
@@ -53,11 +51,9 @@ int main(int argc, char** argv)
             
             auto context = g_Server.get_ctx_async().get();
 
-            std::cout << "Accepted message from client" << std::endl;
-            std::cout << "Method: " << context.request.get_method() << std::endl;
-            std::cout << "Path: " << context.request.get_path() << std::endl;
-            std::cout << "Protocol: " << context.request.get_protocol() << std::endl;
-            std::cout << "Body: |" << context.request.get_body() << "|" << std::endl;
+            std::cout << "Request: [" << std::endl;
+            std::cout << context.request.to_string() << std::endl;
+            std::cout << "]" << std::endl;
 
             if (context.request.get_method() == "GET")
             {
@@ -82,6 +78,10 @@ int main(int argc, char** argv)
                     context.response.statusMessage = "File not found!";
                 }
             }
+
+            std::cout << "Response: [" << std::endl;
+            std::cout << context.response.to_string() << std::endl;
+            std::cout << "]" << std::endl;
 
             context.response.send_and_close_async().get();
         }

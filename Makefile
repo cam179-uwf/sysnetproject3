@@ -21,4 +21,4 @@ http-client.o: src/http-client.cpp
 	g++ $(ARGS) -c $<
 
 clean:
-	rm httpServer httpClient *.o
+	rm server client *.o

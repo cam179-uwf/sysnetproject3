@@ -77,7 +77,7 @@ HttpClientResponse parse(const std::string& response)
 
         if (headerSplits.size() == 2)
         {
-            res.headers[headerSplits[0]] = headerSplits[1];
+            res.headers[headerSplits[0]] = strhelp::trim(headerSplits[1]);
         }
 
         std::getline(iss, header);
@@ -208,10 +208,10 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
 
     std::ostringstream oss;
 
-    char buffer[4096];
+    char buffer[_bufferSize];
     ssize_t n;
 
-    while ((n = read(clientFd, buffer, sizeof(buffer) - 1)) > 0)
+    while ((n = read(clientFd, buffer, _bufferSize - 1)) > 0)
     {
         if (n < 0)
         {
@@ -244,15 +244,16 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     return parse(oss.str());
 }
 
-HttpClient::HttpClient(const std::string& host, const int port)
+HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
 {
     _host = host;
     _port = port;
+    _bufferSize = bufferSize;
 }
 
 HttpClient::~HttpClient()
 {
-
+    
 }
 
 HttpClient::HttpClient(const HttpClient& other)
@@ -263,8 +264,11 @@ HttpClient::HttpClient(const HttpClient& other)
 
 HttpClient& HttpClient::operator=(const HttpClient& other)
 {
-    _host = other._host;
-    _port = other._port;
+    if (this != &other)
+    {
+        _host = other._host;
+        _port = other._port;
+    }
     return *this;
 }
 
@@ -276,4 +280,46 @@ std::future<HttpClientResponse> HttpClient::get_async(const HttpClientRequest& r
 std::future<HttpClientResponse> HttpClient::post_async(const HttpClientRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "POST", request);
+}
+
+std::string cas::HttpClientResponse::to_string()
+{
+    std::ostringstream oss;
+
+    oss << "HTTP/1.1 " << statusCode << " " << statusMessage << std::endl;
+
+    for (auto header : headers)
+    {
+        oss << header.first << ": " << header.second << std::endl;
+    }
+
+    if (headers.size() <= 0)
+    {
+        oss << std::endl;
+    }
+
+    oss << body;
+
+    return oss.str();
+}
+
+std::string cas::HttpClientRequest::to_string()
+{
+    std::ostringstream oss;
+
+    oss << "[TBD] " << path << " HTTP/1.1" << std::endl;
+
+    for (auto header : headers)
+    {
+        oss << header.first << ": " << header.second << std::endl;
+    }
+
+    if (headers.size() <= 0)
+    {
+        oss << std::endl;
+    }
+
+    oss << body;
+
+    return oss.str();
 }

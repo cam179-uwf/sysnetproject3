@@ -15,6 +15,8 @@ namespace cas
         std::string statusMessage;
         std::map<std::string, std::string> headers;
         std::string body;
+
+        std::string to_string();
     };
 
     struct HttpClientRequest
@@ -22,20 +24,23 @@ namespace cas
         std::string path;
         std::map<std::string, std::string> headers;
         std::string body;
+
+        std::string to_string();
     };
 
     class HttpClient
     {
         std::string _host;
         int _port;
+        int _bufferSize;
 
         HttpClientResponse make_request(const std::string& method, const HttpClientRequest& request);
 
     public:
-        HttpClient(const std::string& host, const int port);
+        HttpClient(const std::string& host, const int port, const int bufferSize);
         ~HttpClient();
         HttpClient(const HttpClient& other);
-        HttpClient& operator=(const HttpClient& other);    
+        HttpClient& operator=(const HttpClient& other);
 
         std::future<HttpClientResponse> get_async(const HttpClientRequest& request);
         std::future<HttpClientResponse> post_async(const HttpClientRequest& request);

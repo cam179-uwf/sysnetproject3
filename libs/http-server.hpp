@@ -21,10 +21,10 @@ namespace cas
         HttpServerContext get_ctx();
 
     public:
-        HttpServer();
+        HttpServer(const int port, const int bufferSize);
         ~HttpServer();
-        HttpServer(const HttpServer& other) = delete;
-        HttpServer& operator=(const HttpServer& other) = delete;
+        HttpServer(const HttpServer& other);
+        HttpServer& operator=(const HttpServer& other);
 
         std::future<HttpServerContext> get_ctx_async();
         void set_port(const int port);
