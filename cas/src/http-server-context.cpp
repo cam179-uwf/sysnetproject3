@@ -57,7 +57,7 @@ void cas::HttpRequest::parse(const std::string& content)
     std::string firstLine;
     std::getline(iss, firstLine);
 
-    auto firstLineSplits = strhelp::split(firstLine, ' ');
+    auto firstLineSplits = strhelp::split(firstLine, ' ', 3);
 
     if (firstLineSplits.size() >= 1)
     {
@@ -112,11 +112,7 @@ std::string cas::HttpRequest::to_string()
         oss << header.first << ": " << header.second << std::endl;
     }
 
-    if (_headers.size() <= 0)
-    {
-        oss << std::endl;
-    }
-
+    oss << std::endl;
     oss << _body;
 
     return oss.str();
@@ -143,11 +139,7 @@ std::future<void> cas::HttpResponse::send_and_close_async()
             oss << header.first << ": " << header.second << std::endl;
         }
 
-        if (headers.size() <= 0)
-        {
-            oss << std::endl;
-        }
-
+        oss << std::endl;
         oss << body;
 
         std::string content(oss.str());
@@ -192,11 +184,7 @@ std::string cas::HttpResponse::to_string()
         oss << header.first << ": " << header.second << std::endl;
     }
 
-    if (headers.size() <= 0)
-    {
-        oss << std::endl;
-    }
-
+    oss << std::endl;
     oss << body;
 
     return oss.str();

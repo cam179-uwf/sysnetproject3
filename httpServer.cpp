@@ -7,7 +7,7 @@
 
 #include "cas/libs/http-server.hpp"
 
-cas::HttpServer g_Server(60001, 1024);
+cas::HttpServer g_Server(60001, DEFAULT_SERVER_BUFFER_SIZE);
 
 std::string read_file_contents(std::string path)
 {
@@ -77,11 +77,19 @@ int main(int argc, char** argv)
                     context.response.statusCode = 404;
                     context.response.statusMessage = "File not found!";
                 }
-            }
 
-            std::cout << "Response: [" << std::endl;
-            std::cout << context.response.to_string() << std::endl;
-            std::cout << "]" << std::endl;
+                std::cout << "Response: [" << std::endl;
+                std::cout << context.response.to_string() << std::endl;
+                std::cout << "]" << std::endl;
+            }
+            else if (context.request.get_method() == "POST")
+            {
+                context.response.protocol = "HTTP/1.1";
+                context.response.statusCode = 200;
+                context.response.statusMessage = "Message recieved!";
+
+                std::cout << "Client Message: " << context.request.get_body() << std::endl;
+            }
 
             context.response.send_and_close_async().get();
         }

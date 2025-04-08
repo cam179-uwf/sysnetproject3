@@ -15,6 +15,8 @@
 
 #include "../libs/http-server-context.hpp"
 
+#define DEFAULT_SERVER_BUFFER_SIZE 1024
+
 // cas (Client and Server)
 namespace cas 
 {

@@ -12,6 +12,8 @@
 #include <future>
 #include <map>
 
+#define DEFAULT_CLIENT_BUFFER_SIZE 4096
+
 // cas (Client and Server)
 namespace cas
 {

@@ -63,11 +63,7 @@ std::string build_http_request_str(const std::string& method, const HttpClientRe
         oss << header.first << ": " << header.second << std::endl;
     }
 
-    if (request.headers.size() <= 0)
-    {
-        oss << std::endl;
-    }
-
+    oss << std::endl;
     oss << request.body;
 
     return oss.str();
@@ -85,7 +81,7 @@ HttpClientResponse parse(const std::string& response)
     std::string firstLine;
     std::getline(iss, firstLine);
 
-    auto firstLineSplits = strhelp::split(firstLine, ' ');
+    auto firstLineSplits = strhelp::split(firstLine, ' ', 3);
 
     if (firstLineSplits.size() >= 1)
     {
@@ -321,11 +317,7 @@ std::string cas::HttpClientResponse::to_string()
         oss << header.first << ": " << header.second << std::endl;
     }
 
-    if (headers.size() <= 0)
-    {
-        oss << std::endl;
-    }
-
+    oss << std::endl;
     oss << body;
 
     return oss.str();
@@ -343,11 +335,7 @@ std::string cas::HttpClientRequest::to_string()
         oss << header.first << ": " << header.second << std::endl;
     }
 
-    if (headers.size() <= 0)
-    {
-        oss << std::endl;
-    }
-
+    oss << std::endl;
     oss << body;
 
     return oss.str();

@@ -46,6 +46,7 @@ namespace cas
 
         void set_client_fd(int client_fd);
         std::future<void> send_and_close_async();
+        // std::future<void> send_dont_close_async();
 
         std::string to_string();
 

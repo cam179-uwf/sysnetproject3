@@ -15,6 +15,7 @@
 namespace strhelp
 {
     std::vector<std::string> split(const std::string& text, const char delimiter);
+    std::vector<std::string> split(const std::string& text, const char delimiter, size_t maxNumberOfSplits);
     std::string trim(const std::string& text);
 }
 
