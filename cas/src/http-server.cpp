@@ -141,57 +141,47 @@ HttpServerContext HttpServer::get_ctx()
 {
     HttpServerContext result;
 
+    bool hasContext = false;
+
     // clientFd will stay at zero until
     // a clientFd is actually read
-    while (result.get_client_fd() == 0)
+    while (!hasContext)
     {
+        // wait for an event
         poll(_fds.data(), _fds.size(), -1);
 
+        // process event
         for (size_t i = 0; i < _fds.size(); ++i)
         {
-            if (!(_fds[i].revents & POLLIN)) continue;
-            result = handle(_fds[i].fd, i, _fds[i].fd == _serverFd);
-            break;
+            if ((_fds[i].revents & POLLIN))
+            {
+                if (_fds[i].fd == _serverFd)
+                {
+                    handleAccept();
+                }
+                else
+                {
+                    hasContext = handleRead(_fds[i].fd, i, result);
+                }   
+                break;
+            }
         }
     }
 
-    std::cout << "Returning a context with clientFd: " << result.get_client_fd() << std::endl;
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Returning a context with clientFd: " << result.get_client_fd() << std::endl;
+    }
     return result;
 }
 
-HttpServerContext cas::HttpServer::handle(int clientFd, size_t& fdIndex, const bool isNewConnection)
+/// @brief Reads data from connected clients.
+/// @param clientFd 
+/// @param fdIndex 
+/// @param result 
+/// @return True if data was read, False otherwise.
+bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContext& result)
 {
-    HttpServerContext result;
-
-    if (isNewConnection)
-    {
-        clientFd = accept(_serverFd, (sockaddr *)&_address, (socklen_t *)&_addrlen);
-        std::cout << "Accepted new client: " << clientFd << std::endl;
-
-        if (clientFd < 0)
-        {
-            switch (errno)
-            {
-            case EAGAIN | EWOULDBLOCK: throw ServerException("Failed to accept: no connections are present.");
-            case EBADF: throw ServerException("Failed to accept: the socket argument is not a valid file descriptor.");
-            case ECONNABORTED: throw ServerException("Failed to accept: the connection has been aborted.");
-            case EINTR: throw ServerException("Failed to accept: interrupted by a signal that was caught before a valid connection arrived.");
-            case EINVAL: throw ServerException("Failed to accept: the socket is not accepting connections.");
-            case EMFILE: throw ServerException("Failed to accept: " + std::to_string(_SC_OPEN_MAX) + " file descriptors are currently open in the calling process.");
-            case ENFILE: throw ServerException("Failed to accept: the maximum number of file descriptors in the system are already open.");
-            case ENOTSOCK: throw ServerException("Failed to accept: the socket argument does not refer to a socket.");
-            case EOPNOTSUPP: throw ServerException("Failed to accept: the socket type of the specified socket does not support accepting connections.");
-            case ENOBUFS: throw ServerException("Failed to accept: no buffer space is available.");
-            case ENOMEM: throw ServerException("Failed to accept: there was insufficient memory available to complete the operation.");
-            case EPROTO: throw ServerException("Failed to accept: a protocol error has occurred; for example, the STREAMS protocol stack has not been initialized.");
-            default: throw ServerException("Failed to accept an incoming message. (" + std::to_string(clientFd) + ")");
-            }
-        }
-
-        _fds.push_back({clientFd, POLLIN, 0});
-        return result;
-    }
-
     std::ostringstream oss;
     char buffer[_bufferSize] = {0};
 
@@ -201,17 +191,21 @@ HttpServerContext cas::HttpServer::handle(int clientFd, size_t& fdIndex, const b
     buffer[_bufferSize - 1] = '\0';
     oss << buffer;
 
-    std::cout << "Read from client: " << clientFd << std::endl;
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Read from client: " << clientFd << std::endl;
+    }
 
     // client disconnected or error
     if (readResult <= 0)
     {
-        OnCloseClientConnection(clientFd);
-
         close(clientFd);
         _fds.erase(_fds.begin() + fdIndex);
         --fdIndex; // adjust index due to erase
 
+        OnCloseClientConnection(clientFd);
+
+        // handle errors
         if (readResult < 0)
         {
             switch (errno)
@@ -238,10 +232,45 @@ HttpServerContext cas::HttpServer::handle(int clientFd, size_t& fdIndex, const b
     {
         result.request.parse(oss.str()); // Parse the client connection assuming HTTP protocol
         result.set_client_fd(clientFd);
+        return true;
     }
 
-    return result;    
-} 
+    return false;
+}
+
+/// @brief Accepts new client connections.
+void HttpServer::handleAccept()
+{
+    int clientFd = accept(_serverFd, (sockaddr *)&_address, (socklen_t *)&_addrlen);
+
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Accepted new client: " << clientFd << std::endl;
+    }
+
+    // handle errors
+    if (clientFd < 0)
+    {
+        switch (errno)
+        {
+        case EAGAIN | EWOULDBLOCK: throw ServerException("Failed to accept: no connections are present.");
+        case EBADF: throw ServerException("Failed to accept: the socket argument is not a valid file descriptor.");
+        case ECONNABORTED: throw ServerException("Failed to accept: the connection has been aborted.");
+        case EINTR: throw ServerException("Failed to accept: interrupted by a signal that was caught before a valid connection arrived.");
+        case EINVAL: throw ServerException("Failed to accept: the socket is not accepting connections.");
+        case EMFILE: throw ServerException("Failed to accept: " + std::to_string(_SC_OPEN_MAX) + " file descriptors are currently open in the calling process.");
+        case ENFILE: throw ServerException("Failed to accept: the maximum number of file descriptors in the system are already open.");
+        case ENOTSOCK: throw ServerException("Failed to accept: the socket argument does not refer to a socket.");
+        case EOPNOTSUPP: throw ServerException("Failed to accept: the socket type of the specified socket does not support accepting connections.");
+        case ENOBUFS: throw ServerException("Failed to accept: no buffer space is available.");
+        case ENOMEM: throw ServerException("Failed to accept: there was insufficient memory available to complete the operation.");
+        case EPROTO: throw ServerException("Failed to accept: a protocol error has occurred; for example, the STREAMS protocol stack has not been initialized.");
+        default: throw ServerException("Failed to accept an incoming message. (" + std::to_string(clientFd) + ")");
+        }
+    }
+
+    _fds.push_back({clientFd, POLLIN, 0});
+}
 
 /// @brief Gets an HTTP context for a single transaction. If awaited, blocks until a client request is available.
 /// @return A promise that returns the HttpServerContext.
@@ -255,6 +284,11 @@ std::future<HttpServerContext> HttpServer::get_ctx_async()
 /// @param port The port for the server to use.
 void cas::HttpServer::set_port(const int port)
 {
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Server port was set to: " << port << std::endl;
+    }
+
     _port = port;
 }
 
@@ -262,25 +296,40 @@ void cas::HttpServer::set_port(const int port)
 /// @param size The buffer size.
 void cas::HttpServer::set_buffer_size(const int size)
 {
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Server buffer size was set to: " << size << std::endl;
+    }
+
     _bufferSize = size;
 }
 
 /// @brief Closes the server's socket.
 void cas::HttpServer::shutdown()
 {
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Shutting server down..." << std::endl;
+    }
+
     close(_serverFd);
 }
 
 void cas::HttpServer::close_client_connection(int clientFd)
 {
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "Manually closing clientFd: " << clientFd << std::endl;
+    }
+
     for (size_t i = 0; i < _fds.size(); ++i)
     {
         if (_fds[i].fd == clientFd)
         {
-            OnCloseClientConnection(clientFd);
-
             close(clientFd);
             _fds.erase(_fds.begin() + i);
+            
+            OnCloseClientConnection(clientFd);
             break;
         }
     }

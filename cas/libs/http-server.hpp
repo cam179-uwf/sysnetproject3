@@ -22,6 +22,7 @@
 #include "../libs/http-server-context.hpp"
 
 #define DEFAULT_SERVER_BUFFER_SIZE 1024
+#define VERBOSE_DEBUG true
 
 // cas (Client and Server)
 namespace cas 
@@ -38,7 +39,8 @@ namespace cas
         int _addrlen;
 
         HttpServerContext get_ctx();
-        HttpServerContext handle(int clientFd, size_t& fdIndex, const bool isNewConnection);
+        bool handleRead(int clientFd, size_t& fdIndex, HttpServerContext& result);
+        void handleAccept();
 
     public:
         std::function<void(int clientId)> OnCloseClientConnection;

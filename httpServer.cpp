@@ -35,9 +35,12 @@ std::string read_file_contents(std::string path)
     throw std::runtime_error("File Not Found.");
 }
 
-void handle(cas::HttpServerContext& ctx)
+void handleContext(cas::HttpServerContext& ctx)
 {
-    std::cout << ctx.request.to_string() << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "REQUEST: [" << std::endl;
+    // std::cout << ctx.request.to_string() << std::endl;
+    // std::cout << "]" << std::endl;
 
     if (ctx.request.get_method() == "GET")
     {
@@ -49,16 +52,50 @@ void handle(cas::HttpServerContext& ctx)
             ctx.response.headers["Connection"] = "keep-alive";
 
             ctx.response.sendoff_async().get();
-            return;
+        }
+        else
+        {
+            try 
+            {
+                ctx.response.body = read_file_contents("www" + ctx.request.get_path());
+                ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
+                ctx.response.headers["Content-Type"] = "text/html";
+                ctx.response.headers["Connection"] = "keep-alive";
+
+                ctx.response.sendoff_async().get();
+            }
+            catch (const std::exception& ex)
+            {
+                ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
+                ctx.response.headers["Content-Type"] = "text/html";
+                ctx.response.headers["Connection"] = "keep-alive";
+                ctx.response.statusCode = 404;
+                ctx.response.statusMessage = "File Not Found";
+
+                ctx.response.sendoff_async().get();
+            }
         }
     }
+    else if (ctx.request.get_method() == "POST")
+    {
+        std::cout << "Message from client: " << ctx.request.get_body() << std::endl;
 
-    ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
-    ctx.response.headers["Content-Type"] = "text/html";
-    ctx.response.headers["Connection"] = "keep-alive";
-    ctx.response.statusCode = 500;
-    ctx.response.statusMessage = "Internal Server Error";
-    ctx.response.sendoff_async().get();
+        ctx.response.headers["Content-Length"] = "0";
+        ctx.response.headers["Content-Type"] = "text/html";
+        ctx.response.headers["Connection"] = "keep-alive";
+
+        ctx.response.sendoff_async().get();
+    }
+    else
+    {
+        ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
+        ctx.response.headers["Content-Type"] = "text/html";
+        ctx.response.headers["Connection"] = "close";
+        ctx.response.statusCode = 500;
+        ctx.response.statusMessage = "Internal Server Error";
+
+        ctx.response.sendoff_async().get();
+    }
 }
 
 int main(int argc, char** argv)
@@ -71,6 +108,6 @@ int main(int argc, char** argv)
     while (true)
     {
         auto ctx = g_Server.get_ctx_async().get();
-        handle(ctx);
+        handleContext(ctx);
     }
 }
