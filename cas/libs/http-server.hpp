@@ -22,7 +22,7 @@
 #include "../libs/http-server-context.hpp"
 
 #define DEFAULT_SERVER_BUFFER_SIZE 1024
-#define VERBOSE_DEBUG true
+#define VERBOSE_DEBUG false
 
 // cas (Client and Server)
 namespace cas 
@@ -47,8 +47,8 @@ namespace cas
 
         HttpServer(const int port, const int bufferSize);
         ~HttpServer();
-        HttpServer(const HttpServer& other);
-        HttpServer& operator=(const HttpServer& other);
+        HttpServer(const HttpServer& other) = default;
+        HttpServer& operator=(const HttpServer& other) = default;
 
         std::future<HttpServerContext> get_ctx_async();
         void set_port(const int port);

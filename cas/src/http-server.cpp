@@ -106,34 +106,6 @@ HttpServer::~HttpServer()
     shutdown();
 }
 
-cas::HttpServer::HttpServer(const HttpServer &other)
-{
-    _serverFd = other._serverFd;
-    _port = other._port;
-    _bufferSize = other._bufferSize;
-    _fds = other._fds;
-    _address = other._address;
-    _addrlen = other._addrlen;
-    _sessions = other._sessions;
-    OnCloseClientConnection = other.OnCloseClientConnection;
-}
-
-HttpServer &cas::HttpServer::operator=(const HttpServer &other)
-{
-    if (this != &other)
-    {
-        _serverFd = other._serverFd;
-        _port = other._port;
-        _bufferSize = other._bufferSize;
-        _fds = other._fds;
-        _address = other._address;
-        _addrlen = other._addrlen;
-        _sessions = other._sessions;
-        OnCloseClientConnection = other.OnCloseClientConnection;
-    }
-    return *this;
-}
-
 /// @brief Gets an HTTP context for a single transaction. Blocks until a client request is available.
 /// @return The HttpServerContext.
 /// @throw ServerException
@@ -147,9 +119,26 @@ HttpServerContext HttpServer::get_ctx()
     // a clientFd is actually read
     while (!hasContext)
     {
-        // wait for an event
-        poll(_fds.data(), _fds.size(), -1);
+        // wait for an event but timeout at 10 seconds
+        int numberOfEvents = poll(_fds.data(), _fds.size(), 10000);
 
+        if (numberOfEvents <= 0)
+        {
+            if (VERBOSE_DEBUG && numberOfEvents == 0)
+            {
+                std::cout << "Poll timed out after 10 seconds." << std::endl;
+
+                std::cout << "Connected Clients: [" << std::endl;
+                for (size_t i = 1; i < _fds.size(); ++i)
+                {
+                    std::cout << "\tClientFd: " << _fds[i].fd << std::endl;
+                }
+                std::cout << "]" << std::endl;
+            }
+
+            continue;
+        }
+        
         // process event
         for (size_t i = 0; i < _fds.size(); ++i)
         {
@@ -315,6 +304,8 @@ void cas::HttpServer::shutdown()
     close(_serverFd);
 }
 
+/// @brief Manually close a clients connection.
+/// @param clientFd 
 void cas::HttpServer::close_client_connection(int clientFd)
 {
     if (VERBOSE_DEBUG)

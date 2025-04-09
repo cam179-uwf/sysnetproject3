@@ -66,6 +66,7 @@ void handleContext(cas::HttpServerContext& ctx)
             }
             catch (const std::exception& ex)
             {
+                ctx.response.body = read_file_contents("www/404.html");
                 ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
                 ctx.response.headers["Content-Type"] = "text/html";
                 ctx.response.headers["Connection"] = "keep-alive";

@@ -32,22 +32,6 @@ HttpClient::~HttpClient()
     
 }
 
-HttpClient::HttpClient(const HttpClient& other)
-{
-    _host = other._host;
-    _port = other._port;
-}
-
-HttpClient& HttpClient::operator=(const HttpClient& other)
-{
-    if (this != &other)
-    {
-        _host = other._host;
-        _port = other._port;
-    }
-    return *this;
-}
-
 /// @brief Builds a string that becomes the raw HTTP request that is sent over the network.
 /// @param method The method to use for the HTTP request.
 /// @param request The HTTP request.

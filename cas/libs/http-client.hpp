@@ -48,8 +48,8 @@ namespace cas
     public:
         HttpClient(const std::string& host, const int port, const int bufferSize);
         ~HttpClient();
-        HttpClient(const HttpClient& other);
-        HttpClient& operator=(const HttpClient& other);
+        HttpClient(const HttpClient& other) = default;
+        HttpClient& operator=(const HttpClient& other) = default;
 
         std::future<HttpClientResponse> get_async(const HttpClientRequest& request);
         std::future<HttpClientResponse> post_async(const HttpClientRequest& request);

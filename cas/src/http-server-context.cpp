@@ -138,7 +138,10 @@ std::future<void> cas::HttpResponse::sendoff_async()
 
         std::string content(oss.str());
 
-        std::cout << "Sending message to clientFd: " << _clientFd << std::endl;
+        if (VERBOSE_DEBUG)
+        {
+            std::cout << "Sending message to clientFd: " << _clientFd << std::endl;
+        }
 
         // send the response to the client
         if (send(_clientFd, content.c_str(), content.size(), 0) < 0)
