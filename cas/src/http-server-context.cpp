@@ -15,6 +15,7 @@
 
 #include "../libs/string-helpers.hpp"
 #include "../libs/exceptions.hpp"
+#include "../libs/http-server.hpp"
 
 using namespace cas;
 
@@ -118,16 +119,9 @@ std::string cas::HttpRequest::to_string()
     return oss.str();
 }
 
-/// @brief Sets the client file descriptor.
-/// @param client_fd The client file descriptor.
-void cas::HttpResponse::set_client_fd(int client_fd)
-{
-    _clientFd = client_fd;
-}
-
 /// @brief Sends the HTTP response and closes this clients socket.
 /// @return A promise.
-std::future<void> cas::HttpResponse::send_and_close_async()
+std::future<void> cas::HttpResponse::sendoff_async()
 {
     return std::async([this]() {
         std::ostringstream oss;
@@ -143,6 +137,8 @@ std::future<void> cas::HttpResponse::send_and_close_async()
         oss << body;
 
         std::string content(oss.str());
+
+        std::cout << "Sending message to clientFd: " << _clientFd << std::endl;
 
         // send the response to the client
         if (send(_clientFd, content.c_str(), content.size(), 0) < 0)
@@ -167,8 +163,6 @@ std::future<void> cas::HttpResponse::send_and_close_async()
             default: throw ServerException("Failed to send message to client.");
             }
         }
-
-        close(_clientFd);
     });
 }
 
@@ -188,4 +182,20 @@ std::string cas::HttpResponse::to_string()
     oss << body;
 
     return oss.str();
+}
+
+cas::HttpResponse::HttpResponse(int clientFd)
+{
+    _clientFd = clientFd;
+}
+
+void cas::HttpServerContext::set_client_fd(const int clientFd)
+{
+    _clientFd = clientFd;
+    response = HttpResponse(_clientFd);
+}
+
+int cas::HttpServerContext::get_client_fd() const
+{
+    return _clientFd;
 }

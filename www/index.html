@@ -6,5 +6,22 @@
     <body>
         <h1>Project 3 Weather App</h1>
         <a href="weather.html">Weather</a>
+        <input id="message">
+        <button onclick="messageServer()">Message Server</button>
+
+        <script>
+            function messageServer()
+            {
+                let input = document.getElementById('message').value;
+                
+                fetch("/messages", {
+                    method: "POST",
+                    body: input
+                })
+                .then(res => {
+                    console.log("Request complete! Response: ", res);
+                });
+            }
+        </script>
     </body>
 </html>

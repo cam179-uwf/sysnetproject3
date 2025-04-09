@@ -38,17 +38,18 @@ namespace cas
     /// @brief For keeping track of and sending responses
     struct HttpResponse
     {
-        std::string protocol;
-        size_t statusCode;
-        std::string statusMessage;
+        std::string protocol = "HTTP/1.1";
+        size_t statusCode = 200;
+        std::string statusMessage = "Success";
         std::map<std::string, std::string> headers;
         std::string body;
 
-        void set_client_fd(int client_fd);
-        std::future<void> send_and_close_async();
+        std::future<void> sendoff_async();
         // std::future<void> send_dont_close_async();
 
         std::string to_string();
+
+        HttpResponse(int clientFd);
 
     private:
         int _clientFd;
@@ -58,7 +59,13 @@ namespace cas
     struct HttpServerContext
     {
         HttpRequest request;
-        HttpResponse response;
+        HttpResponse response = HttpResponse(0);
+        
+        void set_client_fd(const int clientFd);
+        int get_client_fd() const;
+
+    private:
+        int _clientFd = 0;
     };
 }
 

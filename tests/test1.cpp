@@ -25,7 +25,7 @@ TESTS()
     // context.response.statusCode = 200;
     // context.response.statusMessage = "Success";
     // context.response.body = "This worked!";
-    // context.response.send_and_close_async().get();
+    // context.response.sendoff_async().get();
 
     // auto clientResponse = clientResponseAsync.get();
 

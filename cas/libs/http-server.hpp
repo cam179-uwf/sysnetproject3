@@ -12,6 +12,12 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <vector>
+#include <poll.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <functional>
 
 #include "../libs/http-server-context.hpp"
 
@@ -21,15 +27,22 @@
 namespace cas 
 {
     /// @brief Basically an HTTP Listener
-    class HttpServer 
+    class HttpServer
     {
         int _serverFd;
         int _port;
         int _bufferSize;
+        std::vector<pollfd> _fds;
+        std::map<int, std::string> _sessions;
+        sockaddr_in _address;
+        int _addrlen;
 
         HttpServerContext get_ctx();
+        HttpServerContext handle(int clientFd, size_t& fdIndex, const bool isNewConnection);
 
     public:
+        std::function<void(int clientId)> OnCloseClientConnection;
+
         HttpServer(const int port, const int bufferSize);
         ~HttpServer();
         HttpServer(const HttpServer& other);
@@ -39,6 +52,7 @@ namespace cas
         void set_port(const int port);
         void set_buffer_size(const int size);
         void shutdown();
+        void close_client_connection(int clientFd);
     };
 }
 
