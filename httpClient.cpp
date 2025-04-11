@@ -87,20 +87,26 @@ void logout(cas::HttpClient &client)
 
 void change_password(cas::HttpClient &client)
 {
-    std::cout << "Type username: ";
+    std::cout << "Type old password: ";
+    
+    std::string oldpassword;
+    std::getline(std::cin, oldpassword);
+
+    std::cout << "Type new password: ";
+
+    std::string newpassword;
+    std::getline(std::cin, newpassword);
 
     cas::HttpClientRequest request;
     request.path = "/changepassword";
     request.headers["Authorization"] = bearer;
+    request.headers["oldpassword"] = oldpassword;
+    request.headers["newpassword"] = newpassword;
 
-    auto response = client.post_async(request).get();
+     auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
 
-    if (response.statusCode != 200)
-    {
-        std::cerr << "Did not successfully send message." << std::endl;
-    }
 }
 
 bool is_logged_in(cas::HttpClient &client)
@@ -111,7 +117,7 @@ bool is_logged_in(cas::HttpClient &client)
 
     auto response = client.get_async(request).get();
 
-    return response.headers["LoggedIn"] == "true";
+    return response.statusCode == 200;
 }
 
 int main(int argc, char **argv)
@@ -170,10 +176,10 @@ int main(int argc, char **argv)
             switch (option)
             {
             case 1:
-                signup(client);
+                logout(client);
                 break;
             case 2:
-                login(client);
+                change_password(client);
                 break;
             }
         }
