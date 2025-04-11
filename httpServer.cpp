@@ -9,6 +9,19 @@ struct UserInfo
 {
     std::string username;
     std::string password;
+    std::vector<std::string> locations;
+
+    std::string locations_to_string()
+    {
+        std::string result;
+
+        for (auto str : locations)
+        {
+            str + "\n";
+        }
+
+        return result;
+    }
 };
 
 cas::HttpServer g_Server(60001, DEFAULT_SERVER_BUFFER_SIZE);
@@ -291,6 +304,90 @@ void handleContext(cas::HttpServerContext &ctx)
         
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "Old password did not match.";
+        ctx.response.sendoff_close_async(g_Server).get();
+        return;
+    }
+    // =========================
+    // | Subscribe to Location |
+    // =========================
+    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/subscribe")
+    {
+        if (!isAuthorized)
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        std::string location;
+
+        if (!ctx.request.try_get_header("location", location) || is_whitespace(location))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include the location header when subscribing to a location.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        g_Sessions[bearer].locations.push_back(location);
+
+        ctx.response.set_status(cas::HttpResponse::Status::OK);
+        ctx.response.sendoff_close_async(g_Server).get();
+        return;
+    }
+    // =============================
+    // | Unsubscribe from Location |
+    // =============================
+    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/unsubscribe")
+    {
+        if (!isAuthorized)
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        std::string location;
+
+        if (!ctx.request.try_get_header("location", location) || is_whitespace(location))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include the location header when unsubscribing to a location.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        for (size_t i = 0; i < g_Sessions[bearer].locations.size(); ++i)
+        {
+            if (g_Sessions[bearer].locations[i] == location)
+            {
+                g_Sessions[bearer].locations.erase(g_Sessions[bearer].locations.begin() + i);
+
+                ctx.response.set_status(cas::HttpResponse::Status::OK);
+                ctx.response.sendoff_close_async(g_Server).get();
+                return;
+            }
+        }
+
+        ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+        ctx.response.body = "The location you tried to remove doesn't exist.";
+        ctx.response.sendoff_close_async(g_Server).get();
+        return;
+    }
+    // =================
+    // | Get Locations |
+    // =================
+    else if (ctx.request.get_method() == "GET" && ctx.request.get_path() == "/getlocations")
+    {
+        if (!isAuthorized)
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        ctx.response.set_status(cas::HttpResponse::Status::OK);
+        ctx.response.body = "The locations you are subscribed to:\n" + g_Sessions[bearer].locations_to_string();
         ctx.response.sendoff_close_async(g_Server).get();
         return;
     }
