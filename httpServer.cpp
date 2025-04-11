@@ -1,102 +1,182 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <csignal>
-#include <cstdlib>
 
 #include "cas/libs/http-server.hpp"
+#include "libs/helpers.hpp"
+#include "cas/libs/string-helpers.hpp"
+
+struct UserInfo
+{
+    std::string username;
+    std::string password;
+};
 
 cas::HttpServer g_Server(60001, DEFAULT_SERVER_BUFFER_SIZE);
-
-std::string read_file_contents(std::string path)
-{
-    std::cout << "Reading file contents from path: " << path << std::endl;
-
-    std::ifstream ifs(path);
-    std::ostringstream oss;
-    
-    if (ifs.is_open())
-    {
-        std::string line;
-        while (std::getline(ifs, line))
-        {
-            oss << line;
-        }
-
-        return oss.str();
-    }
-    else
-    {
-        std::cerr << "Could not open " << path << "." << std::endl;
-        throw std::runtime_error("Could not open " + path + ".");
-    }
-
-    throw std::runtime_error("File Not Found.");
-}
+std::map<std::string, UserInfo> _loggedInUsers;
 
 void handleContext(cas::HttpServerContext& ctx)
 {
-    // std::cout << std::endl;
-    // std::cout << "REQUEST: [" << std::endl;
-    // std::cout << ctx.request.to_string() << std::endl;
-    // std::cout << "]" << std::endl;
-
-    if (ctx.request.get_method() == "GET")
+    // ===========
+    // | SIGN UP |
+    // ===========
+    if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/signup")
     {
-        if (ctx.request.get_path() == "/")
-        {
-            ctx.response.body = read_file_contents("www/index.html");
-            ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
-            ctx.response.headers["Content-Type"] = "text/html";
-            ctx.response.headers["Connection"] = "keep-alive";
+        UserInfo userInfo;
 
-            ctx.response.sendoff_async().get();
+        if (!ctx.request.try_get_header("Username", userInfo.username) || is_whitespace(userInfo.username))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a username when signing up.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        if (!ctx.request.try_get_header("Password", userInfo.password) || is_whitespace(userInfo.password))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a password when signing up.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        auto token = generate_token(base64_encode(userInfo.username.substr(0, 5)));
+
+        // TODO: check if the user already exists
+
+        _loggedInUsers[token] = userInfo;
+
+        ctx.response.headers["Authorization"] = "Bearer " + token;
+        ctx.response.sendoff_close_async(g_Server).get();
+
+        std::cout << "Signed up a user." << std::endl;
+        std::cout << "Username: " << userInfo.username << std::endl;
+        std::cout << "Password: " << userInfo.password << std::endl;
+        std::cout << "Bearer Token: " << token << std::endl;
+        return;
+    }
+    // ==========
+    // | LOG IN |
+    // ==========
+    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/login")
+    {
+        UserInfo userInfo;
+
+        if (!ctx.request.try_get_header("Username", userInfo.username) || is_whitespace(userInfo.username))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a username when login.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        if (!ctx.request.try_get_header("Password", userInfo.password) || is_whitespace(userInfo.password))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a password when login.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        auto token = generate_token(base64_encode(userInfo.username.substr(0, 5)));
+
+        // TODO: check if the user already exists
+
+        _loggedInUsers[token] = userInfo;
+
+        ctx.response.headers["Authorization"] = "Bearer " + token;
+        ctx.response.sendoff_close_async(g_Server).get();
+
+        std::cout << "Logged in a user." << std::endl;
+        std::cout << "Username: " << userInfo.username << std::endl;
+        std::cout << "Password: " << userInfo.password << std::endl;
+        std::cout << "Bearer Token: " << token << std::endl;
+        return;
+    }
+    // ===========
+    // | LOG OUT |
+    // ===========
+    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/logout")
+    {
+        std::string bearer;
+
+        if (!ctx.request.try_get_header("Authorization", bearer) || is_whitespace(ctx.request.get_headers()["Authorization"]))
+        {
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a bearer when logging out.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        auto result = strhelp::split(ctx.request.get_headers()["Authorization"], ' ', 2);
+
+        if (result.size() > 1)
+        {
+            bearer = result[1];
         }
         else
         {
-            try 
-            {
-                ctx.response.body = read_file_contents("www" + ctx.request.get_path());
-                ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
-                ctx.response.headers["Content-Type"] = "text/html";
-                ctx.response.headers["Connection"] = "keep-alive";
-
-                ctx.response.sendoff_async().get();
-            }
-            catch (const std::exception& ex)
-            {
-                ctx.response.body = read_file_contents("www/404.html");
-                ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
-                ctx.response.headers["Content-Type"] = "text/html";
-                ctx.response.headers["Connection"] = "keep-alive";
-                ctx.response.statusCode = 404;
-                ctx.response.statusMessage = "File Not Found";
-
-                ctx.response.sendoff_async().get();
-            }
+            ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
+            ctx.response.body = "You must include a bearer when logging out.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
         }
-    }
-    else if (ctx.request.get_method() == "POST")
-    {
-        std::cout << "Message from client: " << ctx.request.get_body() << std::endl;
 
-        ctx.response.headers["Content-Length"] = "0";
-        ctx.response.headers["Content-Type"] = "text/html";
-        ctx.response.headers["Connection"] = "keep-alive";
+        if (_loggedInUsers.find(bearer) != _loggedInUsers.end())
+        {
+            auto user = _loggedInUsers[bearer];
+            std::cout << "Logged out a user." << std::endl;
+            std::cout << "Username: " << user.username << std::endl;
+            std::cout << "Password: " << user.password << std::endl;
+            std::cout << "Bearer Token: " << bearer << std::endl;
+            _loggedInUsers.erase(bearer);
+        }
+
+        ctx.response.body = "Logged you out.";
 
         ctx.response.sendoff_async().get();
-        g_Server.close_client_connection(ctx.get_client_fd());
+        g_Server.close_client_connection(ctx.get_client_fd()); // close the connection
+        return;
     }
     else
     {
-        ctx.response.headers["Content-Length"] = std::to_string(ctx.response.body.size());
-        ctx.response.headers["Content-Type"] = "text/html";
-        ctx.response.headers["Connection"] = "close";
-        ctx.response.statusCode = 500;
-        ctx.response.statusMessage = "Internal Server Error";
+        std::string bearer;
+        bool isAuthorized = false;
 
-        ctx.response.sendoff_async().get();
+        if (ctx.request.get_headers().find("Authorization") != ctx.request.get_headers().end())
+        {
+            auto result = strhelp::split(ctx.request.get_headers()["Authorization"], ' ', 2);
+
+            if (result.size() > 1)
+            {
+                bearer = result[1];
+                std::cout << "Bearer: " << bearer << std::endl;
+
+                if (_loggedInUsers.find(bearer) != _loggedInUsers.end())
+                {
+                    isAuthorized = true;
+                }
+                else
+                {
+                    ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
+                    ctx.response.sendoff_close_async(g_Server).get();
+                    return;
+                }
+            }
+            else
+            {
+                ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
+                ctx.response.sendoff_close_async(g_Server).get();
+                return;
+            }
+        }
+
+        if (isAuthorized)
+        {
+            ctx.response.body = "You are logged in.";
+            ctx.response.sendoff_close_async(g_Server).get();
+            return;
+        }
+
+        ctx.response.sendoff_close_async(g_Server).get();
     }
 }
 

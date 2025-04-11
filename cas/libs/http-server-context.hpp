@@ -12,8 +12,12 @@
 #include <map>
 #include <future>
 
+#include "../libs/http-server-context.hpp"
+
 namespace cas
 {
+    class HttpServer;
+
     /// @brief For keeping track of requests
     struct HttpRequest
     {
@@ -26,6 +30,9 @@ namespace cas
         std::map<std::string, std::string> get_headers() const;
         std::string get_body() const;
 
+        bool contains_header(const std::string& key);
+        bool try_get_header(const std::string& key, std::string& out);
+
     private:
         std::string _method;
         std::string _path;
@@ -37,6 +44,39 @@ namespace cas
     /// @brief For keeping track of and sending responses
     struct HttpResponse
     {
+        enum class Status 
+        {
+            Continue,
+            SwitchingProtocols,
+            OK,
+            Created,
+            Accepted,
+            NoContent,
+            MovedPermanently,
+            Found,
+            SeeOther,
+            NotModified,
+            TemporaryRedirect,
+            PermanentRedirect,
+            BadRequest,
+            Unauthorized,
+            Forbidden,
+            NotFound,
+            MethodNotAllowed,
+            RequestTimeout,
+            Conflict,
+            LengthRequired,
+            PayloadTooLarge,
+            UnsupportedMediaType,
+            UnprocessableEntity,
+            TooManyRequests,
+            InternalServerError,
+            NotImplemented,
+            BadGateway,
+            ServiceUnavailable,
+            GatewayTimeout
+        };
+
         std::string protocol = "HTTP/1.1";
         size_t statusCode = 200;
         std::string statusMessage = "Success";
@@ -46,8 +86,11 @@ namespace cas
         HttpResponse(int clientFd);
 
         std::future<void> sendoff_async();
+        std::future<void> sendoff_close_async(cas::HttpServer& server);
         std::string to_string();
 
+        void set_status(const Status& status);
+        
     private:
         int _clientFd;
     };

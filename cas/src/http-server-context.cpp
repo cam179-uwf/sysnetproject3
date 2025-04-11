@@ -49,6 +49,21 @@ std::string cas::HttpRequest::get_body() const
     return _body;
 }
 
+bool cas::HttpRequest::contains_header(const std::string& key)
+{
+    return _headers.find(key) != _headers.end();
+}
+
+bool cas::HttpRequest::try_get_header(const std::string& key, std::string &out)
+{
+    if (contains_header(key))
+    {
+        out = _headers[key];
+        return true;
+    }
+    return false;
+}
+
 /// @brief Parses a raw HTTP request.
 /// @param content The raw HTTP request.
 void cas::HttpRequest::parse(const std::string& content)
@@ -169,6 +184,14 @@ std::future<void> cas::HttpResponse::sendoff_async()
     });
 }
 
+std::future<void> cas::HttpResponse::sendoff_close_async(cas::HttpServer& server)
+{
+    return std::async([this, &server]() {
+        sendoff_async().get();
+        server.close_client_connection(_clientFd);
+    });
+}
+
 /// @return The raw HTTP response.
 std::string cas::HttpResponse::to_string()
 {
@@ -185,6 +208,129 @@ std::string cas::HttpResponse::to_string()
     oss << body;
 
     return oss.str();
+}
+
+void cas::HttpResponse::set_status(const Status &status)
+{
+    switch (status)
+    {
+    case HttpResponse::Status::Continue:
+        statusCode = 100;
+        statusMessage = "Continue";
+        break;
+    case HttpResponse::Status::SwitchingProtocols: 
+        statusCode = 101;
+        statusMessage = "Switching Protocols";
+        break;
+    case HttpResponse::Status::OK:
+        statusCode = 200;
+        statusMessage = "OK";
+        break;
+    case HttpResponse::Status::Created:
+        statusCode = 201;
+        statusMessage = "Created";
+        break;
+    case HttpResponse::Status::Accepted:
+        statusCode = 202;
+        statusMessage = "Accepted";
+        break;
+    case HttpResponse::Status::NoContent:
+        statusCode = 204;
+        statusMessage = "No Content";
+        break;
+    case HttpResponse::Status::MovedPermanently:
+        statusCode = 301;
+        statusMessage = "Moved Permanently";
+        break;
+    case HttpResponse::Status::Found:
+        statusCode = 302;
+        statusMessage = "Found";
+        break;
+    case HttpResponse::Status::SeeOther:
+        statusCode = 303;
+        statusMessage = "See Other";
+        break;
+    case HttpResponse::Status::NotModified:
+        statusCode = 304;
+        statusMessage = "Not Modified";
+        break;
+    case HttpResponse::Status::TemporaryRedirect:
+        statusCode = 307;
+        statusMessage = "Temporary Redirect";
+        break;
+    case HttpResponse::Status::PermanentRedirect:
+        statusCode = 308;
+        statusMessage = "Permanent Redirect";
+        break;
+    case HttpResponse::Status::BadRequest:
+        statusCode = 400;
+        statusMessage = "Bad Request";
+        break;
+    case HttpResponse::Status::Unauthorized:
+        statusCode = 401;
+        statusMessage = "Unauthorized";
+        break;
+    case HttpResponse::Status::Forbidden:
+        statusCode = 403;
+        statusMessage = "Forbidden";
+        break;
+    case HttpResponse::Status::NotFound:
+        statusCode = 404;
+        statusMessage = "Not Found";
+        break;
+    case HttpResponse::Status::MethodNotAllowed:
+        statusCode = 405;
+        statusMessage = "Method Not Allowed";
+        break;
+    case HttpResponse::Status::RequestTimeout:
+        statusCode = 408;
+        statusMessage = "Request Timeout";
+        break;
+    case HttpResponse::Status::Conflict:
+        statusCode = 409;
+        statusMessage = "Conflict";
+        break;
+    case HttpResponse::Status::LengthRequired:
+        statusCode = 411;
+        statusMessage = "Length Required";
+        break;
+    case HttpResponse::Status::PayloadTooLarge:
+        statusCode = 413;
+        statusMessage = "Payload Too Large";
+        break;
+    case HttpResponse::Status::UnsupportedMediaType:
+        statusCode = 415;
+        statusMessage = "Unsupported Media Type";
+        break;
+    case HttpResponse::Status::UnprocessableEntity:
+        statusCode = 422;
+        statusMessage = "Unprocessable Entity";
+        break;
+    case HttpResponse::Status::TooManyRequests:
+        statusCode = 429;
+        statusMessage = "Too Many Requests";
+        break;
+    case HttpResponse::Status::InternalServerError:
+        statusCode = 500;
+        statusMessage = "Internal Server Error";
+        break;
+    case HttpResponse::Status::NotImplemented:
+        statusCode = 501;
+        statusMessage = "Not Implemented";
+        break;
+    case HttpResponse::Status::BadGateway:
+        statusCode = 502;
+        statusMessage = "Bad Gateway";
+        break;
+    case HttpResponse::Status::ServiceUnavailable:
+        statusCode = 503;
+        statusMessage = "Service Unavailable";
+        break;
+    case HttpResponse::Status::GatewayTimeout:
+        statusCode = 504;
+        statusMessage = "Gateway Timeout";
+        break;
+    }
 }
 
 cas::HttpResponse::HttpResponse(int clientFd)

@@ -30,7 +30,7 @@ namespace cas
 
     struct HttpClientRequest
     {
-        std::string path;
+        std::string path = "/";
         std::map<std::string, std::string> headers;
         std::string body;
 
