@@ -6,3 +6,4 @@ httpServer
 .vscode/
 server
 client
+users.txt
