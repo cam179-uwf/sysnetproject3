@@ -273,6 +273,14 @@ void handleContext(cas::HttpServerContext &ctx)
         {
             g_Sessions[bearer].password = newPassword;
 
+            for (auto user : g_Users)
+            {
+                if (user.username == g_Sessions[bearer].username)
+                {
+                    user.password = newPassword;
+                }
+            }
+
             ctx.response.set_status(cas::HttpResponse::Status::OK);
             ctx.response.body = "Password changed successfully.";
             ctx.response.sendoff_close_async(g_Server).get();
