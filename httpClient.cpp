@@ -147,8 +147,6 @@ void unsubscribe(cas::HttpClient &client)
 
 }
 
-
-
 void get_my_locations(cas::HttpClient &client)
 {
 

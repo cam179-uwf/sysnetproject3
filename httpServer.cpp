@@ -17,7 +17,7 @@ struct UserInfo
 
         for (auto str : locations)
         {
-            str + "\n";
+            result += str + "\n";
         }
 
         return result;
