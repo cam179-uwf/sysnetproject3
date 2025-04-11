@@ -86,6 +86,7 @@ void handleContext(cas::HttpServerContext& ctx)
         ctx.response.headers["Connection"] = "keep-alive";
 
         ctx.response.sendoff_async().get();
+        g_Server.close_client_connection(ctx.get_client_fd());
     }
     else
     {

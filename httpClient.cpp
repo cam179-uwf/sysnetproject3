@@ -28,5 +28,6 @@ void send_client_message(cas::HttpClient& client)
 
 int main(int argc, char** argv)
 {
-    
+    cas::HttpClient client("127.0.0.1", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
+    send_client_message(client);
 }
