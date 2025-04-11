@@ -147,6 +147,21 @@ void unsubscribe(cas::HttpClient &client)
 
 }
 
+
+
+void get_my_locations(cas::HttpClient &client)
+{
+
+    cas::HttpClientRequest request;
+    request.path = "/getlocations";
+    request.headers["Authorization"] = bearer;
+
+     auto response = client.get_async(request).get();
+
+    std::cout << response.to_string() << std::endl;
+
+}
+
 bool is_logged_in(cas::HttpClient &client)
 {
     cas::HttpClientRequest request;
@@ -199,6 +214,7 @@ int main(int argc, char **argv)
             std::cout << "2: change password" << std::endl;
             std::cout << "3: subscribe to a location" << std::endl;
             std::cout << "4: unsubscribe from a location" << std::endl;
+            std::cout << "5: get locations" << std::endl;
             std::cout << "Pick an option: " << std::endl;
 
             std::string optionStr;
@@ -226,6 +242,9 @@ int main(int argc, char **argv)
                 break;
             case 4:
                 unsubscribe(client);
+                break;
+            case 5:
+                get_my_locations(client);
                 break;
             }
         }
