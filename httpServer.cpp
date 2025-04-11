@@ -273,11 +273,11 @@ void handleContext(cas::HttpServerContext &ctx)
         {
             g_Sessions[bearer].password = newPassword;
 
-            for (auto user : g_Users)
+            for (size_t i = 0; i < g_Users.size(); ++i)
             {
-                if (user.username == g_Sessions[bearer].username)
+                if (g_Users[i].username == g_Sessions[bearer].username)
                 {
-                    user.password = newPassword;
+                    g_Users[i].password = newPassword;
                 }
             }
 
