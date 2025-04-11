@@ -5,7 +5,7 @@
 
 std::string bearer;
 
-void signup(cas::HttpClient& client)
+void signup(cas::HttpClient &client)
 {
     std::cout << "Type username: ";
 
@@ -36,7 +36,7 @@ void signup(cas::HttpClient& client)
     }
 }
 
-void login(cas::HttpClient& client)
+void login(cas::HttpClient &client)
 {
     std::cout << "Type username: ";
 
@@ -67,7 +67,7 @@ void login(cas::HttpClient& client)
     }
 }
 
-void logout(cas::HttpClient& client)
+void logout(cas::HttpClient &client)
 {
     std::cout << "Type username: ";
 
@@ -85,12 +85,15 @@ void logout(cas::HttpClient& client)
     }
 }
 
-void make_get_request(cas::HttpClient& client)
+void change_password(cas::HttpClient &client)
 {
+    std::cout << "Type username: ";
+
     cas::HttpClientRequest request;
+    request.path = "/changepassword";
     request.headers["Authorization"] = bearer;
 
-    auto response = client.get_async(request).get();
+    auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
 
@@ -100,41 +103,79 @@ void make_get_request(cas::HttpClient& client)
     }
 }
 
-int main(int argc, char** argv)
+bool is_logged_in(cas::HttpClient &client)
+{
+    cas::HttpClientRequest request;
+    request.path = "/amiloggedin";
+    request.headers["Authorization"] = bearer;
+
+    auto response = client.get_async(request).get();
+
+    return response.headers["LoggedIn"] == "true";
+}
+
+int main(int argc, char **argv)
 {
     cas::HttpClient client("127.0.0.1", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
-    
+
     while (true)
     {
-        std::cout << "1: sign up" << std::endl;
-        std::cout << "2: log in" << std::endl;
-        std::cout << "3: log out" << std::endl;
-        std::cout << "4: make GET request" << std::endl;
-        std::cout << "Pick an option: " << std::endl;
-        
-        std::string optionStr;
-        int option = 0;
-        std::getline(std::cin, optionStr);
-
-        try 
+        if (!is_logged_in(client))
         {
-            option = std::stoi(optionStr);
+            std::cout << "1: sign up" << std::endl;
+            std::cout << "2: log in" << std::endl;
+            std::cout << "Pick an option: " << std::endl;
+
+            std::string optionStr;
+            int option = 0;
+            std::getline(std::cin, optionStr);
+
+            try
+            {
+                option = std::stoi(optionStr);
+            }
+            catch (const std::exception &ex)
+            {
+            }
+
+            switch (option)
+            {
+            case 1:
+                signup(client);
+                break;
+            case 2:
+                login(client);
+                break;
+            }
         }
-        catch (const std::exception& ex)
+        else
         {
 
-        }
+            std::cout << "1: log out" << std::endl;
+            std::cout << "2: change password" << std::endl;
+            std::cout << "Pick an option: " << std::endl;
 
-        switch (option)
-        {
-        case 1: signup(client);
-            break;
-        case 2: login(client);
-            break;
-        case 3: logout(client);
-            break;
-        case 4: make_get_request(client);
-            break;
+            std::string optionStr;
+            int option = 0;
+            std::getline(std::cin, optionStr);
+
+            try
+            {
+                option = std::stoi(optionStr);
+            }
+            catch (const std::exception &ex)
+            {
+            }
+
+            switch (option)
+            {
+            case 1:
+                signup(client);
+                break;
+            case 2:
+                login(client);
+                break;
+            }
         }
     }
 }
