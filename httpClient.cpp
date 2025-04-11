@@ -109,6 +109,44 @@ void change_password(cas::HttpClient &client)
 
 }
 
+
+void subscribe(cas::HttpClient &client)
+{
+    std::cout << "Type a location: ";
+    
+    std::string location;
+    std::getline(std::cin, location);
+
+    cas::HttpClientRequest request;
+    request.path = "/subscribe";
+    request.headers["Authorization"] = bearer;
+    request.headers["location"] = location;
+
+     auto response = client.post_async(request).get();
+
+    std::cout << response.to_string() << std::endl;
+
+}
+
+
+void unsubscribe(cas::HttpClient &client)
+{
+    std::cout << "Type a location: ";
+    
+    std::string location;
+    std::getline(std::cin, location);
+
+    cas::HttpClientRequest request;
+    request.path = "/unsubscribe";
+    request.headers["Authorization"] = bearer;
+    request.headers["location"] = location;
+
+     auto response = client.post_async(request).get();
+
+    std::cout << response.to_string() << std::endl;
+
+}
+
 bool is_logged_in(cas::HttpClient &client)
 {
     cas::HttpClientRequest request;
@@ -159,6 +197,8 @@ int main(int argc, char **argv)
 
             std::cout << "1: log out" << std::endl;
             std::cout << "2: change password" << std::endl;
+            std::cout << "3: subscribe to a location" << std::endl;
+            std::cout << "4: unsubscribe from a location" << std::endl;
             std::cout << "Pick an option: " << std::endl;
 
             std::string optionStr;
@@ -180,6 +220,12 @@ int main(int argc, char **argv)
                 break;
             case 2:
                 change_password(client);
+                break;
+            case 3:
+                subscribe(client);
+                break;
+            case 4:
+                unsubscribe(client);
                 break;
             }
         }
