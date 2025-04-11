@@ -193,3 +193,5 @@ int main(int argc, char** argv)
         handleContext(ctx);
     }
 }
+
+// TODO: make sendoff async return an error if it was already called.
