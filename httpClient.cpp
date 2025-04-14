@@ -177,37 +177,8 @@ int main(int argc, char **argv)
 
     while (true)
     {
-        if (!is_logged_in(client))
+        if (is_logged_in(client))
         {
-            std::cout << "1: sign up" << std::endl;
-            std::cout << "2: log in" << std::endl;
-            std::cout << "Pick an option: " << std::endl;
-
-            std::string optionStr;
-            int option = 0;
-            std::getline(std::cin, optionStr);
-
-            try
-            {
-                option = std::stoi(optionStr);
-            }
-            catch (const std::exception &ex)
-            {
-            }
-
-            switch (option)
-            {
-            case 1:
-                signup(client);
-                break;
-            case 2:
-                login(client);
-                break;
-            }
-        }
-        else
-        {
-
             std::cout << "1: log out" << std::endl;
             std::cout << "2: change password" << std::endl;
             std::cout << "3: subscribe to a location" << std::endl;
@@ -219,30 +190,51 @@ int main(int argc, char **argv)
             int option = 0;
             std::getline(std::cin, optionStr);
 
+            if (optionStr == "exit") break;
+
             try
             {
                 option = std::stoi(optionStr);
             }
-            catch (const std::exception &ex)
-            {
-            }
+            catch (const std::exception &ex) { }
 
             switch (option)
             {
-            case 1:
-                logout(client);
+            case 1: logout(client);
                 break;
-            case 2:
-                change_password(client);
+            case 2: change_password(client);
                 break;
-            case 3:
-                subscribe(client);
+            case 3: subscribe(client);
                 break;
-            case 4:
-                unsubscribe(client);
+            case 4: unsubscribe(client);
                 break;
-            case 5:
-                get_my_locations(client);
+            case 5: get_my_locations(client);
+                break;
+            }
+        }
+        else
+        {
+            std::cout << "1: sign up" << std::endl;
+            std::cout << "2: log in" << std::endl;
+            std::cout << "Pick an option: " << std::endl;
+
+            std::string optionStr;
+            int option = 0;
+            std::getline(std::cin, optionStr);
+
+            if (optionStr == "exit") break;
+
+            try
+            {
+                option = std::stoi(optionStr);
+            }
+            catch (const std::exception &ex) { }
+
+            switch (option)
+            {
+            case 1: signup(client);
+                break;
+            case 2: login(client);
                 break;
             }
         }

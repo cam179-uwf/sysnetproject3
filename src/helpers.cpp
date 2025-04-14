@@ -1,4 +1,6 @@
 #include "../libs/helpers.hpp"
+#include "../libs/user-info.hpp"
+#include "../cas/libs/string-helpers.hpp"
 
 #include <chrono>
 #include <random>
@@ -94,4 +96,41 @@ std::string read_file_contents(const std::string& path)
     }
 
     throw std::runtime_error("File Not Found.");
+}
+
+void save_file(std::vector<UserInfo>& users)
+{
+    using namespace std;
+    ofstream oss("users.txt");
+
+    for (auto user : users)
+    {
+        oss << user.username << "," << user.password << endl;
+    }
+    oss.close();
+}
+
+void load_file(std::vector<UserInfo>& users)
+{
+    using namespace std;
+    users.clear();
+    ifstream iss("users.txt");
+
+    if (iss.is_open())
+    {
+        string line;
+        while (getline(iss, line))
+        {
+            auto data = strhelp::split(line, ',');
+            if (data.size() <= 1)
+            {
+                continue;
+            }
+            UserInfo userinfo;
+            userinfo.username = data[0];
+            userinfo.password = data[1];
+            users.push_back(userinfo);
+        }
+        iss.close();
+    }
 }

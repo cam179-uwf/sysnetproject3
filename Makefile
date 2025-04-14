@@ -1,18 +1,25 @@
 ARGS = -g -Wall -std=c++11
+LIBS = cas/http-server.o cas/string-helpers.o cas/http-server-context.o cas/http-client.o
 
 main: cas-lib server client
 
 test1: tests/test1.cpp 
-	g++ $(ARGS) $< cas/http-server.o cas/string-helpers.o cas/http-server-context.o cas/http-client.o -o test1
+	g++ $(ARGS) $< $(LIBS) -o test1
 	./test1
 
-server: httpServer.cpp helpers.o
-	g++ $(ARGS) $^ cas/http-server.o cas/string-helpers.o cas/http-server-context.o -o server
+server: httpServer.cpp helpers.o user-info.o weather-service.o
+	g++ $(ARGS) $^ $(LIBS) -o server
 
 client: httpClient.cpp
-	g++ $(ARGS) $< cas/http-client.o cas/string-helpers.o -o client
+	g++ $(ARGS) $< $(LIBS) -o client
 
 helpers.o: src/helpers.cpp
+	g++ $(ARGS) -c $<
+
+user-info.o: src/user-info.cpp
+	g++ $(ARGS) -c $<
+
+weather-service.o: src/weather-service.cpp
 	g++ $(ARGS) -c $<
 
 cas-lib:
