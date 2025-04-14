@@ -138,6 +138,9 @@ std::string cas::HttpRequest::to_string()
 /// @return A promise.
 std::future<void> cas::HttpResponse::sendoff_async()
 {
+    if (_wasSent) throw std::runtime_error("[sendoff_async] Policy dictates that their can only be one response sent per context.");
+    _wasSent = true;
+    
     return std::async([this]() {
         std::ostringstream oss;
 
@@ -186,6 +189,8 @@ std::future<void> cas::HttpResponse::sendoff_async()
 
 std::future<void> cas::HttpResponse::sendoff_close_async()
 {
+    if (_wasSent) throw std::runtime_error("[sendoff_close_async] Policy dictates that their can only be one response sent per context.");
+
     return std::async([this]() {
         sendoff_async().get();
 

@@ -114,6 +114,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
 
             ctx.response.headers["Authorization"] = "Bearer " + token;
             ctx.response.sendoff_close_async().get();
+            ctx.response.sendoff_close_async().get();
 
             std::cout << "Logged in a user." << std::endl;
             std::cout << "Username: " << userInfo.username << std::endl;

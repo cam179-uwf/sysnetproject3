@@ -305,6 +305,19 @@ void cas::HttpServer::shutdown()
     close(_serverFd);
 }
 
+bool cas::HttpServer::is_client_connection_closed(int clientFd)
+{
+    for (auto fd : _fds)
+    {
+        if (fd.fd == clientFd)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /// @brief Manually close a clients connection.
 /// @param clientFd 
 void cas::HttpServer::close_client_connection(int clientFd)

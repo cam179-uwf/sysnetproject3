@@ -54,6 +54,7 @@ namespace cas
         void set_port(const int port);
         void set_buffer_size(const int size);
         void shutdown();
+        bool is_client_connection_closed(int clientFd);
         void close_client_connection(int clientFd);
     };
 }

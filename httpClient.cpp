@@ -177,66 +177,73 @@ int main(int argc, char **argv)
 
     while (true)
     {
-        if (is_logged_in(client))
+        try 
         {
-            std::cout << "1: log out" << std::endl;
-            std::cout << "2: change password" << std::endl;
-            std::cout << "3: subscribe to a location" << std::endl;
-            std::cout << "4: unsubscribe from a location" << std::endl;
-            std::cout << "5: get locations" << std::endl;
-            std::cout << "Pick an option: " << std::endl;
-
-            std::string optionStr;
-            int option = 0;
-            std::getline(std::cin, optionStr);
-
-            if (optionStr == "exit") break;
-
-            try
+            if (is_logged_in(client))
             {
-                option = std::stoi(optionStr);
+                std::cout << "1: log out" << std::endl;
+                std::cout << "2: change password" << std::endl;
+                std::cout << "3: subscribe to a location" << std::endl;
+                std::cout << "4: unsubscribe from a location" << std::endl;
+                std::cout << "5: get locations" << std::endl;
+                std::cout << "Pick an option: " << std::endl;
+
+                std::string optionStr;
+                int option = 0;
+                std::getline(std::cin, optionStr);
+
+                if (optionStr == "exit") break;
+
+                try
+                {
+                    option = std::stoi(optionStr);
+                }
+                catch (const std::exception &ex) { }
+
+                switch (option)
+                {
+                case 1: logout(client);
+                    break;
+                case 2: change_password(client);
+                    break;
+                case 3: subscribe(client);
+                    break;
+                case 4: unsubscribe(client);
+                    break;
+                case 5: get_my_locations(client);
+                    break;
+                }
             }
-            catch (const std::exception &ex) { }
-
-            switch (option)
+            else
             {
-            case 1: logout(client);
-                break;
-            case 2: change_password(client);
-                break;
-            case 3: subscribe(client);
-                break;
-            case 4: unsubscribe(client);
-                break;
-            case 5: get_my_locations(client);
-                break;
+                std::cout << "1: sign up" << std::endl;
+                std::cout << "2: log in" << std::endl;
+                std::cout << "Pick an option: " << std::endl;
+
+                std::string optionStr;
+                int option = 0;
+                std::getline(std::cin, optionStr);
+
+                if (optionStr == "exit") break;
+
+                try
+                {
+                    option = std::stoi(optionStr);
+                }
+                catch (const std::exception &ex) { }
+
+                switch (option)
+                {
+                case 1: signup(client);
+                    break;
+                case 2: login(client);
+                    break;
+                }
             }
         }
-        else
+        catch (const std::exception& ex)
         {
-            std::cout << "1: sign up" << std::endl;
-            std::cout << "2: log in" << std::endl;
-            std::cout << "Pick an option: " << std::endl;
-
-            std::string optionStr;
-            int option = 0;
-            std::getline(std::cin, optionStr);
-
-            if (optionStr == "exit") break;
-
-            try
-            {
-                option = std::stoi(optionStr);
-            }
-            catch (const std::exception &ex) { }
-
-            switch (option)
-            {
-            case 1: signup(client);
-                break;
-            case 2: login(client);
-                break;
-            }
+            std::cerr << ex.what() << std::endl;
         }
     }
 }

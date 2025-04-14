@@ -96,6 +96,7 @@ namespace cas
     private:
         int _clientFd = 0;
         HttpServer* _server;
+        bool _wasSent = false;
     };
 
     /// @brief For holding the context of a server HTTP transaction

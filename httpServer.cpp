@@ -50,14 +50,18 @@ int main(int argc, char **argv)
     g_Service.get_server().OnCloseClientConnection = [](int clientId)
     {
         // handle a closing client connection
-        std::cout << "Connection was closed: " << clientId << std::endl;
     };
 
     while (true)
     {
-        auto ctx = g_Service.get_server().get_ctx_async().get();
-        handle_context(ctx);
+        try 
+        {
+            auto ctx = g_Service.get_server().get_ctx_async().get();
+            handle_context(ctx);
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << ex.what() << std::endl;
+        }
     }
 }
-
-// TODO: make sendoff_async return an error when called a second time
