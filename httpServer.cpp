@@ -11,9 +11,9 @@ WeatherService g_Service;
 
 void handle_context(cas::HttpServerContext& ctx)
 {
-    // std::cout << "=======================================" << std::endl;
-    // std::cout << ctx.request.to_string() << std::endl;
-    // std::cout << "=======================================" << std::endl;
+    std::cout << "=======================================" << std::endl;
+    std::cout << ctx.request.to_string() << std::endl;
+    std::cout << "=======================================" << std::endl;
 
     if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/signup")
     {
@@ -58,9 +58,10 @@ void handle_context(cas::HttpServerContext& ctx)
 
 int main(int argc, char **argv)
 {
-    g_Service.get_server().OnCloseClientConnection = [](int clientId)
+    g_Service.get_server().OnCloseClientConnection = [](int clientFd)
     {
         // handle a closing client connection
+        std::cout << "ClientFd " << clientFd << " disconnected." << std::endl; 
     };
 
     while (true)

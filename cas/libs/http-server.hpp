@@ -42,7 +42,7 @@ namespace cas
         void handleAccept();
 
     public:
-        std::function<void(int clientId)> OnCloseClientConnection;
+        std::function<void(int clientFd)> OnCloseClientConnection;
 
         HttpServer(const int port, const int bufferSize);
         ~HttpServer();

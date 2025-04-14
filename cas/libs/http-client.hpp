@@ -43,6 +43,7 @@ namespace cas
         std::string _host;
         int _port;
         int _bufferSize;
+        int _clientFd;
 
         HttpClientResponse make_request(const std::string& method, const HttpClientRequest& request);
 

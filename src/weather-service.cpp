@@ -136,7 +136,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
         ctx.response.body = "You must be logged in to log out you idiot.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -146,7 +146,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a bearer when logging out.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -160,7 +160,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a bearer when logging out.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -175,7 +175,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     }
 
     ctx.response.body = "Logged you out.";
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
     return;
 }
 
@@ -186,12 +186,12 @@ void WeatherService::is_logged_in(cas::HttpServerContext &ctx)
     if (_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpResponse::Status::OK);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
     }
     else
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
     }
 }
 
@@ -202,7 +202,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     if (!_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
     
@@ -213,7 +213,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include the oldpassword header when changing your password.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -221,7 +221,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include the newpassword header when changing your password.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -239,7 +239,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
 
         ctx.response.set_status(cas::HttpResponse::Status::OK);
         ctx.response.body = "Password changed successfully.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
 
         save_file(_users);
         return;
@@ -247,7 +247,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     
     ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
     ctx.response.body = "Old password did not match.";
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
 }
 
 void WeatherService::subscribe(cas::HttpServerContext &ctx)
@@ -257,7 +257,7 @@ void WeatherService::subscribe(cas::HttpServerContext &ctx)
     if (!_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -267,14 +267,14 @@ void WeatherService::subscribe(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include the location header when subscribing to a location.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
     _sessions[_bearer].locations.push_back(location);
 
     ctx.response.set_status(cas::HttpResponse::Status::OK);
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
     return;
 }
 
@@ -285,7 +285,7 @@ void WeatherService::unsubscribe(cas::HttpServerContext &ctx)
     if (!_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -295,7 +295,7 @@ void WeatherService::unsubscribe(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include the location header when unsubscribing to a location.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -306,14 +306,14 @@ void WeatherService::unsubscribe(cas::HttpServerContext &ctx)
             _sessions[_bearer].locations.erase(_sessions[_bearer].locations.begin() + i);
 
             ctx.response.set_status(cas::HttpResponse::Status::OK);
-            ctx.response.sendoff_close_async().get();
+            ctx.response.sendoff_async().get();
             return;
         }
     }
 
     ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
     ctx.response.body = "The location you tried to remove doesn't exist.";
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
     return;
 }
 
@@ -324,12 +324,12 @@ void WeatherService::get_locations(cas::HttpServerContext &ctx)
     if (!_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpResponse::Status::Unauthorized);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
     ctx.response.set_status(cas::HttpResponse::Status::OK);
     ctx.response.body = "The locations you are subscribed to:\n" + _sessions[_bearer].locations_to_string();
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
     return;
 }
