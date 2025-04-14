@@ -26,11 +26,7 @@ void signup(cas::HttpClient &client)
 
     std::cout << response.to_string() << std::endl;
 
-    if (response.statusCode != 200)
-    {
-        std::cerr << "Did not successfully send message." << std::endl;
-    }
-    else
+    if (response.statusCode == 200)
     {
         bearer = response.headers["Authorization"];
     }
@@ -57,11 +53,7 @@ void login(cas::HttpClient &client)
 
     std::cout << response.to_string() << std::endl;
 
-    if (response.statusCode != 200)
-    {
-        std::cerr << "Did not successfully send message." << std::endl;
-    }
-    else
+    if (response.statusCode == 200)
     {
         bearer = response.headers["Authorization"];
     }
@@ -78,11 +70,6 @@ void logout(cas::HttpClient &client)
     auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
-
-    if (response.statusCode != 200)
-    {
-        std::cerr << "Did not successfully send message." << std::endl;
-    }
 }
 
 void change_password(cas::HttpClient &client)
@@ -103,10 +90,9 @@ void change_password(cas::HttpClient &client)
     request.headers["oldpassword"] = oldpassword;
     request.headers["newpassword"] = newpassword;
 
-     auto response = client.post_async(request).get();
+    auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
-
 }
 
 
@@ -122,10 +108,9 @@ void subscribe(cas::HttpClient &client)
     request.headers["Authorization"] = bearer;
     request.headers["location"] = location;
 
-     auto response = client.post_async(request).get();
+    auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
-
 }
 
 
@@ -141,23 +126,20 @@ void unsubscribe(cas::HttpClient &client)
     request.headers["Authorization"] = bearer;
     request.headers["location"] = location;
 
-     auto response = client.post_async(request).get();
+    auto response = client.post_async(request).get();
 
     std::cout << response.to_string() << std::endl;
-
 }
 
 void get_my_locations(cas::HttpClient &client)
 {
-
     cas::HttpClientRequest request;
     request.path = "/getlocations";
     request.headers["Authorization"] = bearer;
 
-     auto response = client.get_async(request).get();
+    auto response = client.get_async(request).get();
 
     std::cout << response.to_string() << std::endl;
-
 }
 
 bool is_logged_in(cas::HttpClient &client)
@@ -179,7 +161,7 @@ int main(int argc, char **argv)
     {
         try 
         {
-            if (is_logged_in(client))
+            if (bearer != "" && is_logged_in(client))
             {
                 std::cout << "1: log out" << std::endl;
                 std::cout << "2: change password" << std::endl;

@@ -21,7 +21,8 @@ namespace cas
     /// @brief For keeping track of requests
     struct HttpRequest
     {
-        void parse(const std::string& content);
+        void parse_header(const std::string& content);
+        void set_body(const std::string& body);
         std::string to_string();
 
         std::string get_method() const;

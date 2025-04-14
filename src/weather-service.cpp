@@ -46,7 +46,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a username when signing up.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -54,7 +54,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a password when signing up.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -64,7 +64,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
         {
             ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
             ctx.response.body = "Username already exists";
-            ctx.response.sendoff_close_async().get();
+            ctx.response.sendoff_async().get();
             return;
         }
     }
@@ -76,7 +76,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     save_file(_users);
     
     ctx.response.headers["Authorization"] = "Bearer " + token;
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
 
     std::cout << "Signed up a user." << std::endl;
     std::cout << "Username: " << userInfo.username << std::endl;
@@ -93,7 +93,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a username when login.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -101,7 +101,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
     {
         ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
         ctx.response.body = "You must include a password when login.";
-        ctx.response.sendoff_close_async().get();
+        ctx.response.sendoff_async().get();
         return;
     }
 
@@ -113,8 +113,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
             _sessions[token] = userInfo;
 
             ctx.response.headers["Authorization"] = "Bearer " + token;
-            ctx.response.sendoff_close_async().get();
-            ctx.response.sendoff_close_async().get();
+            ctx.response.sendoff_async().get();
 
             std::cout << "Logged in a user." << std::endl;
             std::cout << "Username: " << userInfo.username << std::endl;
@@ -126,7 +125,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
 
     ctx.response.set_status(cas::HttpResponse::Status::BadRequest);
     ctx.response.body = "Credentials are INVALID";
-    ctx.response.sendoff_close_async().get();
+    ctx.response.sendoff_async().get();
 }
 
 void WeatherService::log_out(cas::HttpServerContext &ctx)

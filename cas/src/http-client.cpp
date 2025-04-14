@@ -38,16 +38,19 @@ HttpClient::~HttpClient()
 /// @return A string representing the raw HTTP request.
 std::string build_http_request_str(const std::string& method, const HttpClientRequest& request)
 {
+    std::map<std::string, std::string> headers = request.headers;
+    headers["Content-Length"] = std::to_string(request.body.size());
+
     std::ostringstream oss;
 
-    oss << method << " " << request.path << " HTTP/1.1" << std::endl;
+    oss << method << " " << request.path << " HTTP/1.1" << "\r\n";
 
-    for (auto header : request.headers)
+    for (auto header : headers)
     {
-        oss << header.first << ": " << header.second << std::endl;
+        oss << header.first << ": " << header.second << "\r\n";
     }
 
-    oss << std::endl;
+    oss << "\r\n";
     oss << request.body;
 
     return oss.str();
@@ -56,7 +59,7 @@ std::string build_http_request_str(const std::string& method, const HttpClientRe
 /// @brief Parses an HTTP response.
 /// @param response The raw HTTP response to parse.
 /// @return An HttpClientResponse.
-HttpClientResponse parse(const std::string& response)
+HttpClientResponse parse_header(const std::string& response)
 {
     HttpClientResponse res;
 
@@ -103,16 +106,6 @@ HttpClientResponse parse(const std::string& response)
 
         std::getline(iss, header);
     }
-
-    std::string bodyLine;
-    std::ostringstream bodyBuilder;
-
-    while (std::getline(iss, bodyLine))
-    {
-        bodyBuilder << bodyLine;
-    }
-
-    res.body = bodyBuilder.str();
     
     return res;
 }
@@ -233,42 +226,65 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     }
 
     std::ostringstream oss;
-
-    char buffer[_bufferSize];
-    ssize_t n;
+    int seqCheck = 0;
+    FdReader reader(clientFd, _bufferSize);
 
     // read response from the server not limited to _bufferSize
-    while ((n = read(clientFd, buffer, _bufferSize - 1)) > 0)
+    while (reader.still_connected())
     {
-        if (n < 0)
+        char c = reader.read_next();
+
+        if (c == '\r' && seqCheck == 0)
         {
-            switch (errno)
-            {
-            case EAGAIN: throw ServerException("Failed to read: the file is a pipe or FIFO, the O_NONBLOCK flag is set for the file descriptor, and the thread would be delayed in the read operation.");
-            case EBADF: throw ServerException("Failed to read: the fildes argument is not a valid file descriptor open for reading.");
-            case EBADMSG: throw ServerException("Failed to read: the file is a STREAM file that is set to control-normal mode and the message waiting to be read includes a control part.");
-            case EINTR: throw ServerException("Failed to read: the read operation was terminated due to the receipt of a signal, and no data was transferred.");
-            case EINVAL: throw ServerException("Failed to read: the STREAM or multiplexer referenced by fildes is linked (directly or indirectly) downstream from a multiplexer.");
-            case EIO: throw ServerException("Failed to read: the process is a member of a background process group attempting to read from its controlling terminal, and either the calling thread is blocking SIGTTIN or the process is ignoring SIGTTIN or the process group of the process is orphaned. This error may also be generated for implementation-defined reasons.");
-            case EISDIR: throw ServerException("Failed to read: the fildes argument refers to a directory and the implementation does not allow the directory to be read using read() or pread(). The readdir() function should be used instead.");
-            case EOVERFLOW: throw ServerException("Failed to read: the file is a regular file, nbyte is greater than 0, the starting position is before the end-of-file, and the starting position is greater than or equal to the offset maximum established in the open file description associated with fildes.");
-            case ECONNRESET: throw ServerException("Failed to read: a read was attempted on a socket and the connection was forcibly closed by its peer.");
-            case ENOTCONN: throw ServerException("Failed to read: a read was attempted on a socket that is not connected.");
-            case ETIMEDOUT: throw ServerException("Failed to read: a read was attempted on a socket and a transmission timeout occurred.");
-            case ENOBUFS: throw ServerException("Failed to read: insufficient resources were available in the system to perform the operation.");
-            case ENOMEM: throw ServerException("Failed to read: insufficient memory was available to fulfill the request.");
-            case ENXIO: throw ServerException("Failed to read: a request was made of a nonexistent device, or the request was outside the capabilities of the device.");
-            default: throw ServerException("Failed to read.");
-            }
+            seqCheck = 1;
+        }
+        else if (c == '\n' && seqCheck == 1)
+        {
+            seqCheck = 2;
+        }
+        else if (c == '\r' && seqCheck == 2)
+        {
+            seqCheck = 3;
+        }
+        else if (c == '\n' && seqCheck == 3)
+        {
+            break;
+        }
+        else
+        {
+            seqCheck = 0;
         }
 
-        buffer[n] = '\0';
-        oss << buffer;
+        oss << c;
+    }
+
+    auto response = parse_header(oss.str());
+    
+    if (response.headers.find("Content-Length") != response.headers.end())
+    {
+        try
+        {
+            int contentLength = std::stoi(response.headers["Content-Length"]);
+
+            if (VERBOSE_DEBUG)
+            {
+                std::cout << "Read body of content length: " << contentLength << std::endl;
+            }
+
+            for (int i = 0; i < contentLength && !reader.eos() && reader.still_connected(); ++i)
+            {
+                response.body += reader.read_next();
+            }
+        }
+        catch (const std::exception& ex) 
+        {
+            std::cerr << "Did not get content length from server." << std::endl;
+        }
     }
 
     close(clientFd);
 
-    return parse(oss.str());
+    return response;
 }
 
 /// @brief Makes a GET request.

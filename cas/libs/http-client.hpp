@@ -11,6 +11,7 @@
 #include <string>
 #include <future>
 #include <map>
+#include "fd-reader.hpp"
 
 #define DEFAULT_CLIENT_BUFFER_SIZE 4096
 

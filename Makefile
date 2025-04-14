@@ -1,5 +1,5 @@
 ARGS = -g -Wall -std=c++11
-LIBS = cas/http-server.o cas/string-helpers.o cas/http-server-context.o cas/http-client.o
+LIBS = cas/http-server.o cas/string-helpers.o cas/http-server-context.o cas/http-client.o cas/fd-reader.o
 
 main: cas-lib server client
 

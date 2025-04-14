@@ -66,7 +66,7 @@ bool cas::HttpRequest::try_get_header(const std::string& key, std::string &out)
 
 /// @brief Parses a raw HTTP request.
 /// @param content The raw HTTP request.
-void cas::HttpRequest::parse(const std::string& content)
+void cas::HttpRequest::parse_header(const std::string& content)
 {
     std::istringstream iss(content);
 
@@ -104,16 +104,11 @@ void cas::HttpRequest::parse(const std::string& content)
 
         std::getline(iss, header);
     }
+}
 
-    std::string bodyLine;
-    std::ostringstream bodyBuilder;
-
-    while (std::getline(iss, bodyLine))
-    {
-        bodyBuilder << bodyLine;
-    }
-
-    _body = bodyBuilder.str();
+void cas::HttpRequest::set_body(const std::string &body)
+{
+    _body = body;
 }
 
 /// @return The raw HTTP request.
@@ -142,16 +137,20 @@ std::future<void> cas::HttpResponse::sendoff_async()
     _wasSent = true;
     
     return std::async([this]() {
+        // ==================
+        // | Build Response |
+        // ==================
         std::ostringstream oss;
+        headers["Content-Length"] = std::to_string(body.size());
 
-        oss << protocol << " " << statusCode << " " << statusMessage << std::endl;
+        oss << protocol << " " << statusCode << " " << statusMessage << "\r\n";
 
         for (auto header : headers)
         {
-            oss << header.first << ": " << header.second << std::endl;
+            oss << header.first << ": " << header.second << "\r\n";
         }
 
-        oss << std::endl;
+        oss << "\r\n";
         oss << body;
 
         std::string content(oss.str());

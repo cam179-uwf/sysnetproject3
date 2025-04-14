@@ -11,6 +11,8 @@
 
 #include <stdexcept>
 
+#define VERBOSE_DEBUG false
+
 namespace cas
 {
     class ServerException : public std::runtime_error

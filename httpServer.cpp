@@ -11,6 +11,10 @@ WeatherService g_Service;
 
 void handle_context(cas::HttpServerContext& ctx)
 {
+    // std::cout << "=======================================" << std::endl;
+    // std::cout << ctx.request.to_string() << std::endl;
+    // std::cout << "=======================================" << std::endl;
+
     if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/signup")
     {
         g_Service.sign_up(ctx);
@@ -42,6 +46,13 @@ void handle_context(cas::HttpServerContext& ctx)
     else if (ctx.request.get_method() == "GET" && ctx.request.get_path() == "/getlocations")
     {
         g_Service.get_locations(ctx);
+    }
+    else
+    {
+        std::cout << "Did nothing with the context" << std::endl;
+
+        ctx.response.set_status(cas::HttpResponse::Status::InternalServerError);
+        ctx.response.sendoff_close_async().get();
     }
 }
 
