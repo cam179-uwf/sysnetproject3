@@ -83,29 +83,26 @@ namespace cas
         std::map<std::string, std::string> headers;
         std::string body;
 
-        HttpResponse(int clientFd);
-
         std::future<void> sendoff_async();
-        std::future<void> sendoff_close_async(cas::HttpServer& server);
+        std::future<void> sendoff_close_async();
         std::string to_string();
 
         void set_status(const Status& status);
+
+        void __set_server(HttpServer& server);
+        void __set_client_fd(const int clientFd);
+        int __get_client_fd() const;
         
     private:
-        int _clientFd;
+        int _clientFd = 0;
+        HttpServer* _server;
     };
 
     /// @brief For holding the context of a server HTTP transaction
     struct HttpServerContext
     {
         HttpRequest request;
-        HttpResponse response = HttpResponse(0);
-        
-        void set_client_fd(const int clientFd);
-        int get_client_fd() const;
-
-    private:
-        int _clientFd = 0;
+        HttpResponse response;
     };
 }
 

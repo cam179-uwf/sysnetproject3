@@ -159,7 +159,7 @@ HttpServerContext HttpServer::get_ctx()
 
     if (VERBOSE_DEBUG)
     {
-        std::cout << "Returning a context with clientFd: " << result.get_client_fd() << std::endl;
+        std::cout << "Returning a context with clientFd: " << result.response.__get_client_fd() << std::endl;
     }
     return result;
 }
@@ -220,7 +220,8 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
     else
     {
         result.request.parse(oss.str()); // Parse the client connection assuming HTTP protocol
-        result.set_client_fd(clientFd);
+        result.response.__set_client_fd(clientFd);
+        result.response.__set_server(*this);
         return true;
     }
 

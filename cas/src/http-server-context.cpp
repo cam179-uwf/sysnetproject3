@@ -184,11 +184,13 @@ std::future<void> cas::HttpResponse::sendoff_async()
     });
 }
 
-std::future<void> cas::HttpResponse::sendoff_close_async(cas::HttpServer& server)
+std::future<void> cas::HttpResponse::sendoff_close_async()
 {
-    return std::async([this, &server]() {
+    return std::async([this]() {
         sendoff_async().get();
-        server.close_client_connection(_clientFd);
+
+        // WARNING: this could fail if the pointer is dereferenced before this is called
+        _server->close_client_connection(_clientFd);
     });
 }
 
@@ -333,18 +335,17 @@ void cas::HttpResponse::set_status(const Status &status)
     }
 }
 
-cas::HttpResponse::HttpResponse(int clientFd)
+void cas::HttpResponse::__set_server(HttpServer& server)
+{
+    _server = &server;
+}
+
+void cas::HttpResponse::__set_client_fd(const int clientFd)
 {
     _clientFd = clientFd;
 }
 
-void cas::HttpServerContext::set_client_fd(const int clientFd)
-{
-    _clientFd = clientFd;
-    response = HttpResponse(_clientFd);
-}
-
-int cas::HttpServerContext::get_client_fd() const
+int cas::HttpResponse::__get_client_fd() const
 {
     return _clientFd;
 }
