@@ -1,5 +1,5 @@
 /**
- * Christian Marcellino
+ * Christian Marcellino, Ryan Waddington
  * 4/15/2025
  * 
  * For helper methods used for the server/client.

@@ -23,8 +23,8 @@ weather-service.o: src/weather-service.cpp
 	g++ $(ARGS) -c $<
 
 cas-lib:
-	make -C ./cas -f makelib.mk
+	make -C ./cas
 
 clean:
-	make -C ./cas -f makelib.mk clean
+	make -C ./cas clean
 	rm server client test1 *.o

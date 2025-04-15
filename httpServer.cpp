@@ -72,6 +72,8 @@ int main(int argc, char **argv)
         }
     };
 
+    cas::HttpServerContext ctx;
+
     std::cout << "Starting a server on localhost:60001..." << std::endl;
 
     while (true)
