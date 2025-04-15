@@ -17,6 +17,7 @@ struct UserInfo
     std::string password;
     std::vector<std::string> locations;
 
+    /// @brief Creates a string of all the locations a user has.
     std::string locations_to_string();
 };
 

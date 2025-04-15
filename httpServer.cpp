@@ -1,11 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+
 #include "cas/libs/http-server.hpp"
 #include "libs/helpers.hpp"
 #include "cas/libs/string-helpers.hpp"
 #include "libs/user-info.hpp"
 #include "libs/weather-service.hpp"
+#include "cas/libs/exceptions.hpp"
 
 WeatherService g_Service;
 
@@ -61,18 +63,24 @@ int main(int argc, char **argv)
     g_Service.get_server().OnCloseClientConnection = [](int clientFd)
     {
         // handle a closing client connection
-        std::cout << "ClientFd " << clientFd << " disconnected." << std::endl; 
+        if (VERBOSE_DEBUG)
+        {
+            std::cout << "ClientFd " << clientFd << " disconnected." << std::endl;
+        }
     };
+
+    std::cout << "Starting a server on localhost:60001..." << std::endl;
 
     while (true)
     {
-        try 
+        try
         {
             auto ctx = g_Service.get_server().get_ctx_async().get();
             handle_context(ctx);
         }
         catch (const std::exception& ex)
         {
+            // if any error occurs log it
             std::cerr << ex.what() << std::endl;
         }
     }

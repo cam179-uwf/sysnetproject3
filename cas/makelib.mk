@@ -6,13 +6,13 @@ http-server.o: src/http-server.cpp
 	g++ $(ARGS) -c $<
 
 http-server-context.o: src/http-server-context.cpp
-	g++ $(ARGS) -c $<
+	g++ $(ARGS) -Wno-unknown-pragmas -c $<
 
 string-helpers.o: src/string-helpers.cpp
 	g++ $(ARGS) -c $<
 
 http-client.o: src/http-client.cpp
-	g++ $(ARGS) -c $<
+	g++ $(ARGS) -Wno-unknown-pragmas -c $<
 
 fd-reader.o: src/fd-reader.cpp
 	g++ $(ARGS) -c $<
