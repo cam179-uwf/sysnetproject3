@@ -20,82 +20,12 @@
 
 using namespace cas;
 
-#pragma region Local Methods
-
-std::string build_http_request_str(const std::string& method, const HttpClientRequest& request)
+std::string build_http_request_str(const std::string& method, const HttpRequest& request)
 {
     std::map<std::string, std::string> headers = request.headers;
     headers["Content-Length"] = std::to_string(request.body.size());
-
-    std::ostringstream oss;
-
-    oss << method << " " << request.path << " HTTP/1.1" << "\r\n";
-
-    for (auto header : headers)
-    {
-        oss << header.first << ": " << header.second << "\r\n";
-    }
-
-    oss << "\r\n";
-    oss << request.body;
-
-    return oss.str();
+    return request.to_string();
 }
-
-HttpClientResponse parse_header(const std::string& response)
-{
-    HttpClientResponse res;
-
-    std::istringstream iss(response);
-
-    std::string firstLine;
-    std::getline(iss, firstLine);
-
-    auto firstLineSplits = strhelp::split(firstLine, ' ', 3);
-
-    if (firstLineSplits.size() >= 1)
-    {
-        res.httpVersion = firstLineSplits[0];
-    }
-
-    if (firstLineSplits.size() >= 2)
-    {
-        try 
-        {
-            res.statusCode = std::stoi(firstLineSplits[1]);
-        }
-        catch (const std::exception& ex)
-        {
-            res.statusCode = -1;
-        }
-    }
-
-    if (firstLineSplits.size() >= 3)
-    {
-        res.statusMessage = firstLineSplits[2];
-    }
-
-    std::string header;
-    std::getline(iss, header);
-
-    while (header.size() > 0 && !iswspace(header[0]))
-    {
-        auto headerSplits = strhelp::split(header, ':');
-
-        if (headerSplits.size() == 2)
-        {
-            res.headers[headerSplits[0]] = strhelp::trim(headerSplits[1]);
-        }
-
-        std::getline(iss, header);
-    }
-    
-    return res;
-}
-
-#pragma endregion
-
-#pragma region HttpClient Methods
 
 HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
 {
@@ -189,7 +119,7 @@ HttpClient::~HttpClient()
     close(_clientFd);
 }
 
-HttpClientResponse HttpClient::make_request(const std::string& method, const HttpClientRequest& request)
+HttpResponse HttpClient::make_request(const std::string& method, const HttpRequest& request)
 {
     std::string content = build_http_request_str(method, request);
 
@@ -252,7 +182,8 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
         oss << c;
     }
 
-    auto response = parse_header(oss.str());
+    HttpResponse response;
+    response.init_from_raw_http_header(oss.str());
     
     if (response.headers.find("Content-Length") != response.headers.end())
     {
@@ -282,56 +213,12 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     return response;
 }
 
-std::future<HttpClientResponse> HttpClient::get_async(const HttpClientRequest& request)
+std::future<HttpResponse> HttpClient::get_async(const HttpRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "GET", request);
 }
 
-std::future<HttpClientResponse> HttpClient::post_async(const HttpClientRequest& request)
+std::future<HttpResponse> HttpClient::post_async(const HttpRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "POST", request);
 }
-
-#pragma endregion
-
-#pragma region HttpClientResponse Methods
-
-std::string cas::HttpClientResponse::to_string()
-{
-    std::ostringstream oss;
-
-    oss << "HTTP/1.1 " << statusCode << " " << statusMessage << std::endl;
-
-    for (auto header : headers)
-    {
-        oss << header.first << ": " << header.second << std::endl;
-    }
-
-    oss << std::endl;
-    oss << body;
-
-    return oss.str();
-}
-
-#pragma endregion
-
-#pragma region HttpClientRequest Methods
-
-std::string cas::HttpClientRequest::to_string()
-{
-    std::ostringstream oss;
-
-    oss << "[TBD] " << path << " HTTP/1.1" << std::endl;
-
-    for (auto header : headers)
-    {
-        oss << header.first << ": " << header.second << std::endl;
-    }
-
-    oss << std::endl;
-    oss << body;
-
-    return oss.str();
-}
-
-#pragma endregion

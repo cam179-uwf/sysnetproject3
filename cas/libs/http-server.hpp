@@ -19,12 +19,15 @@
 #include <netinet/in.h>
 #include <functional>
 
-#include "../libs/http-server-context.hpp"
+#include "../libs/http-request.hpp"
+#include "../libs/http-response.hpp"
 
 #define DEFAULT_SERVER_BUFFER_SIZE 1024
 
 namespace cas 
 {
+    struct HttpServerContext;
+
     /// @brief Basically an HTTP Listener
     class HttpServer
     {
@@ -80,6 +83,21 @@ namespace cas
 
         /// @brief Manually close a clients connection.
         void close_client_connection(int clientFd);
+    };
+
+    /// @brief For holding the context of a server HTTP transaction
+    struct HttpServerContext
+    {
+        int fd = 0;
+        HttpServer* server = nullptr;
+        HttpRequest request;
+        HttpResponse response;
+
+        std::future<void> sendoff_async();
+        std::future<void> sendoff_close_async();
+
+    private:
+        bool _wasSent = false;
     };
 }
 

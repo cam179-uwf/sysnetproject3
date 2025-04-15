@@ -157,7 +157,7 @@ HttpServerContext HttpServer::get_ctx()
 
     if (VERBOSE_DEBUG)
     {
-        std::cout << "Returning a context with clientFd: " << result.response.__get_client_fd() << std::endl;
+        std::cout << "Returning a context with clientFd: " << result.fd << std::endl;
     }
     return result;
 }
@@ -172,8 +172,6 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
     // TODO: if the buffer is not large enough an error will most likely be thrown?
     while (reader.still_connected())
     {
-
-        
         char c = reader.read_next();
 
         if (c == '\r' && seqCheck == 0)
@@ -200,14 +198,13 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
         oss << c;
     }
 
-    result.request.parse_header(oss.str());
+    result.request.init_from_raw_http_header(oss.str()); // Parse the client connection assuming HTTP protocol
     
-    if (result.request.get_headers().find("Content-Length") != result.request.get_headers().end())
+    if (result.request.headers_contain("Content-Length"))
     {
         try
         {
-            int contentLength = std::stoi(result.request.get_headers()["Content-Length"]);
-            std::string body;
+            int contentLength = std::stoi(result.request.headers["Content-Length"]);
 
             if (VERBOSE_DEBUG)
             {
@@ -216,10 +213,8 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
 
             for (int i = 0; i < contentLength && !reader.eos() && reader.still_connected(); ++i)
             {
-                body += reader.read_next();
+                result.request.body += reader.read_next();
             }
-
-            result.request.set_body(body);
         }
         catch (const std::exception& ex)
         {
@@ -245,9 +240,8 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
     }
     else
     {
-        result.request.parse_header(oss.str()); // Parse the client connection assuming HTTP protocol
-        result.response.__set_client_fd(clientFd);
-        result.response.__set_server(*this);
+        result.fd = clientFd;
+        result.server = this;
         return true;
     }
 
@@ -353,4 +347,55 @@ void cas::HttpServer::close_client_connection(int clientFd)
             break;
         }
     }
+}
+
+std::future<void> HttpServerContext::sendoff_async()
+{
+    if (_wasSent) throw std::runtime_error("[sendoff_async] Policy dictates that their can only be one response sent per context.");
+    _wasSent = true;
+    
+    return std::async([this]() {
+        std::string content(response.to_string());
+
+        if (VERBOSE_DEBUG)
+        {
+            std::cout << "Sending message to clientFd: " << fd << std::endl;
+        }
+
+        // send the response to the client
+        if (send(fd, content.c_str(), content.size(), 0) < 0)
+        {
+            switch (errno)
+            {
+            case EAGAIN | EWOULDBLOCK: throw ServerException("Failed to send message to client: the socket's file descriptor is marked O_NONBLOCK and the requested operation would block.");
+            case EBADF: throw ServerException("Failed to send message to client: the socket argument is not a valid file descriptor.");
+            case ECONNRESET: throw ServerException("Failed to send message to client: a connection was forcibly closed by a peer.");
+            case EDESTADDRREQ: throw ServerException("Failed to send message to client: the socket is not connection-mode and no peer address is set.");
+            case EINTR: throw ServerException("Failed to send message to client: a signal interrupted send() before any data was transmitted.");
+            case EMSGSIZE: throw ServerException("Failed to send message to client: the message is too large to be sent all at once, as the socket requires.");
+            case ENOTCONN: throw ServerException("Failed to send message to client: the socket is not connected.");
+            case ENOTSOCK: throw ServerException("Failed to send message to client: the socket argument does not refer to a socket.");
+            case EOPNOTSUPP: throw ServerException("Failed to send message to client: the socket argument is associated with a socket that does not support one or more of the values set in flags.");
+            case EPIPE: throw ServerException("Failed to send message to client: the socket is shut down for writing, or the socket is connection-mode and is no longer connected. In the latter case, and if the socket is of type SOCK_STREAM or SOCK_SEQPACKET and the MSG_NOSIGNAL flag is not set, the SIGPIPE signal is generated to the calling thread.");
+            case EACCES: throw ServerException("Failed to send message to client: the calling process does not have appropriate privileges.");
+            case EIO: throw ServerException("Failed to send message to client: an I/O error occurred while reading from or writing to the file system.");
+            case ENETDOWN: throw ServerException("Failed to send message to client: the local network interface used to reach the destination is down.");
+            case ENETUNREACH: throw ServerException("Failed to send message to client: no route to the network is present.");
+            case ENOBUFS: throw ServerException("Failed to send message to client: insufficient resources were available in the system to perform the operation.");
+            default: throw ServerException("Failed to send message to client.");
+            }
+        }
+    });
+}
+
+std::future<void> HttpServerContext::sendoff_close_async()
+{
+    if (_wasSent) throw std::runtime_error("[sendoff_close_async] Policy dictates that their can only be one response sent per context.");
+
+    return std::async([this]() {
+        sendoff_async().get();
+
+        // WARNING: this could fail if the pointer is dereferenced before this is called
+        server->close_client_connection(fd);
+    });
 }

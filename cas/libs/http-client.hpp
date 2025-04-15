@@ -12,37 +12,13 @@
 #include <future>
 #include <map>
 #include "fd-reader.hpp"
+#include "../libs/http-request.hpp"
+#include "../libs/http-response.hpp"
 
 #define DEFAULT_CLIENT_BUFFER_SIZE 4096
 
 namespace cas
 {
-    /// @brief Handles server responses.
-    struct HttpClientResponse
-    {
-        std::string httpVersion;
-        int statusCode;
-        std::string statusMessage;
-        std::map<std::string, std::string> headers;
-        std::string body;
-
-        /// @brief Gets the raw response as a string.
-        /// @return The raw response.
-        std::string to_string();
-    };
-
-    /// @brief Handles client requests.
-    struct HttpClientRequest
-    {
-        std::string path = "/";
-        std::map<std::string, std::string> headers;
-        std::string body;
-
-        /// @brief Gets the raw request as a string.
-        /// @return The raw request.
-        std::string to_string();
-    };
-
     /// @brief Connects to an address and handles client responses and requests.
     class HttpClient
     {
@@ -56,7 +32,7 @@ namespace cas
         /// @param request The HTTP request.
         /// @return A HttpClientResponse.
         /// @throw ClientException
-        HttpClientResponse make_request(const std::string& method, const HttpClientRequest& request);
+        HttpResponse make_request(const std::string& method, const HttpRequest& equest);
 
     public:
         HttpClient(const std::string& host, const int port, const int bufferSize);
@@ -68,13 +44,13 @@ namespace cas
         /// @param request The request.
         /// @return The response from the server.
         /// @throw ClientException
-        std::future<HttpClientResponse> get_async(const HttpClientRequest& request);
+        std::future<HttpResponse> get_async(const HttpRequest& request);
 
         /// @brief Send a post request message to the server.
         /// @param request The request.
         /// @return The response from the server.
         /// @throw ClientException
-        std::future<HttpClientResponse> post_async(const HttpClientRequest& request);
+        std::future<HttpResponse> post_async(const HttpRequest& request);
     };
 }
 

@@ -17,7 +17,7 @@ void signup(cas::HttpClient &client)
     std::string password;
     std::getline(std::cin, password);
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/signup";
     request.headers["Username"] = username;
     request.headers["Password"] = password;
@@ -44,7 +44,7 @@ void login(cas::HttpClient &client)
     std::string password;
     std::getline(std::cin, password);
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/login";
     request.headers["Username"] = username;
     request.headers["Password"] = password;
@@ -63,7 +63,7 @@ void logout(cas::HttpClient &client)
 {
     std::cout << "Type username: ";
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/logout";
     request.headers["Authorization"] = bearer;
 
@@ -84,7 +84,7 @@ void change_password(cas::HttpClient &client)
     std::string newpassword;
     std::getline(std::cin, newpassword);
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/changepassword";
     request.headers["Authorization"] = bearer;
     request.headers["oldpassword"] = oldpassword;
@@ -103,7 +103,7 @@ void subscribe(cas::HttpClient &client)
     std::string location;
     std::getline(std::cin, location);
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/subscribe";
     request.headers["Authorization"] = bearer;
     request.headers["location"] = location;
@@ -121,7 +121,7 @@ void unsubscribe(cas::HttpClient &client)
     std::string location;
     std::getline(std::cin, location);
 
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/unsubscribe";
     request.headers["Authorization"] = bearer;
     request.headers["location"] = location;
@@ -133,7 +133,7 @@ void unsubscribe(cas::HttpClient &client)
 
 void get_my_locations(cas::HttpClient &client)
 {
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/getlocations";
     request.headers["Authorization"] = bearer;
 
@@ -144,7 +144,7 @@ void get_my_locations(cas::HttpClient &client)
 
 bool is_logged_in(cas::HttpClient &client)
 {
-    cas::HttpClientRequest request;
+    cas::HttpRequest request;
     request.path = "/amiloggedin";
     request.headers["Authorization"] = bearer;
 

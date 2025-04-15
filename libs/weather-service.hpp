@@ -8,7 +8,6 @@
 #ifndef H_WEATHER_SERVICE
 #define H_WEATHER_SERVICE
 
-#include "../cas/libs/http-server-context.hpp"
 #include "../cas/libs/http-server.hpp"
 #include "user-info.hpp"
 

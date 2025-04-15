@@ -20,35 +20,35 @@ void handle_context(cas::HttpServerContext& ctx)
         std::cout << "=======================================" << std::endl;
     }
 
-    if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/signup")
+    if (ctx.request.method == "POST" && ctx.request.path == "/signup")
     {
         g_Service.sign_up(ctx);
     }
-    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/login")
+    else if (ctx.request.method == "POST" && ctx.request.path == "/login")
     {
         g_Service.log_in(ctx);
     }
-    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/logout")
+    else if (ctx.request.method == "POST" && ctx.request.path == "/logout")
     {
         g_Service.log_out(ctx);
     }
-    else if (ctx.request.get_method() == "GET" && ctx.request.get_path() == "/amiloggedin")
+    else if (ctx.request.method == "GET" && ctx.request.path == "/amiloggedin")
     {
         g_Service.is_logged_in(ctx);
     }
-    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/changepassword")
+    else if (ctx.request.method == "POST" && ctx.request.path == "/changepassword")
     {
         g_Service.change_password(ctx);
     }
-    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/subscribe")
+    else if (ctx.request.method == "POST" && ctx.request.path == "/subscribe")
     {
         g_Service.subscribe(ctx);
     }
-    else if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/unsubscribe")
+    else if (ctx.request.method == "POST" && ctx.request.path == "/unsubscribe")
     {
         g_Service.unsubscribe(ctx);
     }
-    else if (ctx.request.get_method() == "GET" && ctx.request.get_path() == "/getlocations")
+    else if (ctx.request.method == "GET" && ctx.request.path == "/getlocations")
     {
         g_Service.get_locations(ctx);
     }
@@ -56,8 +56,8 @@ void handle_context(cas::HttpServerContext& ctx)
     {
         std::cout << "Did nothing with the context" << std::endl;
 
-        ctx.response.set_status(cas::HttpResponse::Status::InternalServerError);
-        ctx.response.sendoff_close_async().get();
+        ctx.response.set_status(cas::HttpStatus::InternalServerError);
+        ctx.sendoff_close_async().get();
     }
 }
 
