@@ -23,7 +23,6 @@
 
 #define DEFAULT_SERVER_BUFFER_SIZE 1024
 
-// cas (Client and Server)
 namespace cas 
 {
     /// @brief Basically an HTTP Listener
@@ -37,11 +36,23 @@ namespace cas
         sockaddr_in _address;
         int _addrlen;
 
+        /// @brief Gets an HTTP context for a single transaction. Blocks until a client request is available.
+        /// @return The HttpServerContext.
+        /// @throw ServerException
         HttpServerContext get_ctx();
+
+        /// @brief Reads data from connected clients.
+        /// @param clientFd 
+        /// @param fdIndex 
+        /// @param result 
+        /// @return True if data was read, False otherwise.
         bool handleRead(int clientFd, size_t& fdIndex, HttpServerContext& result);
+
+        /// @brief Accepts new client connections.
         void handleAccept();
 
     public:
+        /// @brief A callback for capturing when a client connection is closed.
         std::function<void(int clientFd)> OnCloseClientConnection;
 
         HttpServer(const int port, const int bufferSize);
@@ -49,11 +60,25 @@ namespace cas
         HttpServer(const HttpServer& other) = default;
         HttpServer& operator=(const HttpServer& other) = default;
 
+        /// @brief Gets an HTTP context for a single transaction. If awaited, blocks until a client request is available.
+        /// @return An awaitable task that returns an HttpServerContext.
+        /// @throw ServerException
         std::future<HttpServerContext> get_ctx_async();
+
+        /// @brief Set the server's port.
         void set_port(const int port);
+
+        /// @brief Set the server's buffer size for reading client requests.
+        /// @param size The buffer size.
         void set_buffer_size(const int size);
+
+        /// @brief Closes the server socket.
         void shutdown();
+
+        /// @brief Check to see if a client file descriptor is closed. 
         bool is_client_connection_closed(int clientFd);
+
+        /// @brief Manually close a clients connection.
         void close_client_connection(int clientFd);
     };
 }

@@ -107,9 +107,6 @@ HttpServer::~HttpServer()
     shutdown();
 }
 
-/// @brief Gets an HTTP context for a single transaction. Blocks until a client request is available.
-/// @return The HttpServerContext.
-/// @throw ServerException
 HttpServerContext HttpServer::get_ctx()
 {
     HttpServerContext result;
@@ -165,11 +162,6 @@ HttpServerContext HttpServer::get_ctx()
     return result;
 }
 
-/// @brief Reads data from connected clients.
-/// @param clientFd 
-/// @param fdIndex 
-/// @param result 
-/// @return True if data was read, False otherwise.
 bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContext& result)
 {
     std::ostringstream oss;
@@ -259,7 +251,6 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
     return false;
 }
 
-/// @brief Accepts new client connections.
 void HttpServer::handleAccept()
 {
     int clientFd = accept(_serverFd, (sockaddr *)&_address, (socklen_t *)&_addrlen);
@@ -293,16 +284,11 @@ void HttpServer::handleAccept()
     _fds.push_back({clientFd, POLLIN, 0});
 }
 
-/// @brief Gets an HTTP context for a single transaction. If awaited, blocks until a client request is available.
-/// @return A promise that returns the HttpServerContext.
-/// @throw ServerException 
 std::future<HttpServerContext> HttpServer::get_ctx_async()
 {
     return std::async(std::launch::async, &HttpServer::get_ctx, this);
 }
 
-/// @brief Set the server's port.
-/// @param port The port for the server to use.
 void cas::HttpServer::set_port(const int port)
 {
     if (VERBOSE_DEBUG)
@@ -313,8 +299,6 @@ void cas::HttpServer::set_port(const int port)
     _port = port;
 }
 
-/// @brief Set the server's buffer size for reading client requests.
-/// @param size The buffer size.
 void cas::HttpServer::set_buffer_size(const int size)
 {
     if (VERBOSE_DEBUG)
@@ -325,7 +309,6 @@ void cas::HttpServer::set_buffer_size(const int size)
     _bufferSize = size;
 }
 
-/// @brief Closes the server's socket.
 void cas::HttpServer::shutdown()
 {
     if (VERBOSE_DEBUG)
@@ -349,8 +332,6 @@ bool cas::HttpServer::is_client_connection_closed(int clientFd)
     return true;
 }
 
-/// @brief Manually close a clients connection.
-/// @param clientFd 
 void cas::HttpServer::close_client_connection(int clientFd)
 {
     if (VERBOSE_DEBUG)

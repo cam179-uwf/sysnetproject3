@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/15/2025
+ * 
+ * Used for maintaining user info.
+ */
+
 #ifndef H_USER_INFO
 #define H_USER_INFO
 

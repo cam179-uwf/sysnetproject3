@@ -20,6 +20,83 @@
 
 using namespace cas;
 
+#pragma region Local Methods
+
+std::string build_http_request_str(const std::string& method, const HttpClientRequest& request)
+{
+    std::map<std::string, std::string> headers = request.headers;
+    headers["Content-Length"] = std::to_string(request.body.size());
+
+    std::ostringstream oss;
+
+    oss << method << " " << request.path << " HTTP/1.1" << "\r\n";
+
+    for (auto header : headers)
+    {
+        oss << header.first << ": " << header.second << "\r\n";
+    }
+
+    oss << "\r\n";
+    oss << request.body;
+
+    return oss.str();
+}
+
+HttpClientResponse parse_header(const std::string& response)
+{
+    HttpClientResponse res;
+
+    std::istringstream iss(response);
+
+    std::string firstLine;
+    std::getline(iss, firstLine);
+
+    auto firstLineSplits = strhelp::split(firstLine, ' ', 3);
+
+    if (firstLineSplits.size() >= 1)
+    {
+        res.httpVersion = firstLineSplits[0];
+    }
+
+    if (firstLineSplits.size() >= 2)
+    {
+        try 
+        {
+            res.statusCode = std::stoi(firstLineSplits[1]);
+        }
+        catch (const std::exception& ex)
+        {
+            res.statusCode = -1;
+        }
+    }
+
+    if (firstLineSplits.size() >= 3)
+    {
+        res.statusMessage = firstLineSplits[2];
+    }
+
+    std::string header;
+    std::getline(iss, header);
+
+    while (header.size() > 0 && !iswspace(header[0]))
+    {
+        auto headerSplits = strhelp::split(header, ':');
+
+        if (headerSplits.size() == 2)
+        {
+            res.headers[headerSplits[0]] = strhelp::trim(headerSplits[1]);
+        }
+
+        std::getline(iss, header);
+    }
+    
+    return res;
+}
+
+#pragma endregion
+
+#pragma region HttpClient Methods
+
 HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
 {
     _host = host;
@@ -112,89 +189,6 @@ HttpClient::~HttpClient()
     close(_clientFd);
 }
 
-/// @brief Builds a string that becomes the raw HTTP request that is sent over the network.
-/// @param method The method to use for the HTTP request.
-/// @param request The HTTP request.
-/// @return A string representing the raw HTTP request.
-std::string build_http_request_str(const std::string& method, const HttpClientRequest& request)
-{
-    std::map<std::string, std::string> headers = request.headers;
-    headers["Content-Length"] = std::to_string(request.body.size());
-
-    std::ostringstream oss;
-
-    oss << method << " " << request.path << " HTTP/1.1" << "\r\n";
-
-    for (auto header : headers)
-    {
-        oss << header.first << ": " << header.second << "\r\n";
-    }
-
-    oss << "\r\n";
-    oss << request.body;
-
-    return oss.str();
-}
-
-/// @brief Parses an HTTP response.
-/// @param response The raw HTTP response to parse.
-/// @return An HttpClientResponse.
-HttpClientResponse parse_header(const std::string& response)
-{
-    HttpClientResponse res;
-
-    std::istringstream iss(response);
-
-    std::string firstLine;
-    std::getline(iss, firstLine);
-
-    auto firstLineSplits = strhelp::split(firstLine, ' ', 3);
-
-    if (firstLineSplits.size() >= 1)
-    {
-        res.httpVersion = firstLineSplits[0];
-    }
-
-    if (firstLineSplits.size() >= 2)
-    {
-        try 
-        {
-            res.statusCode = std::stoi(firstLineSplits[1]);
-        }
-        catch (const std::exception& ex)
-        {
-            res.statusCode = -1;
-        }
-    }
-
-    if (firstLineSplits.size() >= 3)
-    {
-        res.statusMessage = firstLineSplits[2];
-    }
-
-    std::string header;
-    std::getline(iss, header);
-
-    while (header.size() > 0 && !iswspace(header[0]))
-    {
-        auto headerSplits = strhelp::split(header, ':');
-
-        if (headerSplits.size() == 2)
-        {
-            res.headers[headerSplits[0]] = strhelp::trim(headerSplits[1]);
-        }
-
-        std::getline(iss, header);
-    }
-    
-    return res;
-}
-
-/// @brief Makes an HTTP request using the provided method and request.
-/// @param method The HTTP method to use.
-/// @param request The HTTP request.
-/// @return A HttpClientResponse.
-/// @throw ClientException
 HttpClientResponse HttpClient::make_request(const std::string& method, const HttpClientRequest& request)
 {
     std::string content = build_http_request_str(method, request);
@@ -285,25 +279,20 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
     return response;
 }
 
-/// @brief Makes a GET request.
-/// @param request The HTTP request.
-/// @return A promise that returns an HttpClientRequest.
-/// @throw ClientException
 std::future<HttpClientResponse> HttpClient::get_async(const HttpClientRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "GET", request);
 }
 
-/// @brief Makes a POST request.
-/// @param request The HTTP request.
-/// @return A promise that returns an HttpClientRequest.
-/// @throw ClientException
 std::future<HttpClientResponse> HttpClient::post_async(const HttpClientRequest& request)
 {
     return std::async(&HttpClient::make_request, this, "POST", request);
 }
 
-/// @return A string representing the raw HTTP response.
+#pragma endregion
+
+#pragma region HttpClientResponse Methods
+
 std::string cas::HttpClientResponse::to_string()
 {
     std::ostringstream oss;
@@ -321,7 +310,10 @@ std::string cas::HttpClientResponse::to_string()
     return oss.str();
 }
 
-/// @return A string representing the raw HTTP request.
+#pragma endregion
+
+#pragma region HttpClientRequest Methods
+
 std::string cas::HttpClientRequest::to_string()
 {
     std::ostringstream oss;
@@ -338,3 +330,5 @@ std::string cas::HttpClientRequest::to_string()
 
     return oss.str();
 }
+
+#pragma endregion

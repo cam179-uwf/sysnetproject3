@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/15/2025
+ * 
+ * For helper methods used for the server/client.
+ */
+
 #include "../libs/helpers.hpp"
 #include "../libs/user-info.hpp"
 #include "../cas/libs/string-helpers.hpp"

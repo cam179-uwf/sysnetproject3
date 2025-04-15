@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/15/2025
+ * 
+ * For reading file descriptors naturally.
+ */
+
 #include "../libs/fd-reader.hpp"
 
 #include <unistd.h>

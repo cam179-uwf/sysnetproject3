@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/15/2025
+ * 
+ * For helper methods used for the server/client.
+ */
+
 #ifndef H_HELPERS
 #define H_HELPERS
 

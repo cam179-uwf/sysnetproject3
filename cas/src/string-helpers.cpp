@@ -9,10 +9,6 @@
 
 namespace strhelp
 {
-    /// @brief Splits a string by a delimiter.
-    /// @param text The string to split.
-    /// @param delimiter The delimiter.
-    /// @return An array of strings representing the split pieces.
     std::vector<std::string> split(const std::string& text, const char delimiter)
     {
         std::vector<std::string> result;
@@ -38,10 +34,6 @@ namespace strhelp
         return result;
     }
 
-    /// @brief Splits a string by a delimiter.
-    /// @param text The string to split.
-    /// @param delimiter The delimiter.
-    /// @return An array of strings representing the split pieces.
     std::vector<std::string> split(const std::string& text, const char delimiter, size_t maxNumberOfSplits)
     {
         std::vector<std::string> result;
@@ -75,9 +67,6 @@ namespace strhelp
         return result;
     }
 
-    /// @brief Removes white spaces from the beginning and end of the string.
-    /// @param text The string to remove whitespaces from.
-    /// @return A string with the whitespaces removed from the beginning and end of the string.
     std::string trim(const std::string& text)
     {
         size_t start = 0, end = text.size() - 1;

@@ -15,9 +15,9 @@
 
 #define DEFAULT_CLIENT_BUFFER_SIZE 4096
 
-// cas (Client and Server)
 namespace cas
 {
+    /// @brief Handles server responses.
     struct HttpClientResponse
     {
         std::string httpVersion;
@@ -26,18 +26,24 @@ namespace cas
         std::map<std::string, std::string> headers;
         std::string body;
 
+        /// @brief Gets the raw response as a string.
+        /// @return The raw response.
         std::string to_string();
     };
 
+    /// @brief Handles client requests.
     struct HttpClientRequest
     {
         std::string path = "/";
         std::map<std::string, std::string> headers;
         std::string body;
 
+        /// @brief Gets the raw request as a string.
+        /// @return The raw request.
         std::string to_string();
     };
 
+    /// @brief Connects to an address and handles client responses and requests.
     class HttpClient
     {
         std::string _host;
@@ -45,6 +51,11 @@ namespace cas
         int _bufferSize;
         int _clientFd;
 
+        /// @brief Makes an HTTP request using the provided method and request.
+        /// @param method The HTTP method to use.
+        /// @param request The HTTP request.
+        /// @return A HttpClientResponse.
+        /// @throw ClientException
         HttpClientResponse make_request(const std::string& method, const HttpClientRequest& request);
 
     public:
@@ -53,7 +64,16 @@ namespace cas
         HttpClient(const HttpClient& other) = default;
         HttpClient& operator=(const HttpClient& other) = default;
 
+        /// @brief Send a get request message to the server.
+        /// @param request The request.
+        /// @return The response from the server.
+        /// @throw ClientException
         std::future<HttpClientResponse> get_async(const HttpClientRequest& request);
+
+        /// @brief Send a post request message to the server.
+        /// @param request The request.
+        /// @return The response from the server.
+        /// @throw ClientException
         std::future<HttpClientResponse> post_async(const HttpClientRequest& request);
     };
 }

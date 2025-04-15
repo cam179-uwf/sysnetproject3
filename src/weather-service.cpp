@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino
+ * 4/15/2025
+ * 
+ * Service used for making API calls called by the client.
+ */
+
 #include "../libs/weather-service.hpp"
 
 #include <iostream>

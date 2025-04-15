@@ -19,31 +19,28 @@
 
 using namespace cas;
 
-/// @return The HTTP method.
+#pragma region HttpRequest Methods
+
 std::string cas::HttpRequest::get_method() const
 {
     return _method;
 }
 
-/// @return The requested path.
 std::string cas::HttpRequest::get_path() const
 {
     return _path;
 }
 
-/// @return The HTTP protocol.
 std::string cas::HttpRequest::get_protocol() const
 {
     return _protocol;
 }
 
-/// @return The HTTP headers.
 std::map<std::string, std::string> cas::HttpRequest::get_headers() const
 {
     return _headers;
 }
 
-/// @return The HTTP body.
 std::string cas::HttpRequest::get_body() const
 {
     return _body;
@@ -64,8 +61,6 @@ bool cas::HttpRequest::try_get_header(const std::string& key, std::string &out)
     return false;
 }
 
-/// @brief Parses a raw HTTP request.
-/// @param content The raw HTTP request.
 void cas::HttpRequest::parse_header(const std::string& content)
 {
     std::istringstream iss(content);
@@ -106,13 +101,12 @@ void cas::HttpRequest::parse_header(const std::string& content)
     }
 }
 
-void cas::HttpRequest::set_body(const std::string &body)
+void HttpRequest::set_body(const std::string &body)
 {
     _body = body;
 }
 
-/// @return The raw HTTP request.
-std::string cas::HttpRequest::to_string()
+std::string HttpRequest::to_string()
 {
     std::ostringstream oss;
 
@@ -129,9 +123,11 @@ std::string cas::HttpRequest::to_string()
     return oss.str();
 }
 
-/// @brief Sends the HTTP response and closes this clients socket.
-/// @return A promise.
-std::future<void> cas::HttpResponse::sendoff_async()
+#pragma endregion
+
+#pragma region HttpResponse Methods
+
+std::future<void> HttpResponse::sendoff_async()
 {
     if (_wasSent) throw std::runtime_error("[sendoff_async] Policy dictates that their can only be one response sent per context.");
     _wasSent = true;
@@ -186,7 +182,7 @@ std::future<void> cas::HttpResponse::sendoff_async()
     });
 }
 
-std::future<void> cas::HttpResponse::sendoff_close_async()
+std::future<void> HttpResponse::sendoff_close_async()
 {
     if (_wasSent) throw std::runtime_error("[sendoff_close_async] Policy dictates that their can only be one response sent per context.");
 
@@ -198,8 +194,7 @@ std::future<void> cas::HttpResponse::sendoff_close_async()
     });
 }
 
-/// @return The raw HTTP response.
-std::string cas::HttpResponse::to_string()
+std::string HttpResponse::to_string()
 {
     std::ostringstream oss;
 
@@ -216,7 +211,7 @@ std::string cas::HttpResponse::to_string()
     return oss.str();
 }
 
-void cas::HttpResponse::set_status(const Status &status)
+void HttpResponse::set_status(const Status &status)
 {
     switch (status)
     {
@@ -339,17 +334,19 @@ void cas::HttpResponse::set_status(const Status &status)
     }
 }
 
-void cas::HttpResponse::__set_server(HttpServer& server)
+void HttpResponse::__set_server(HttpServer& server)
 {
     _server = &server;
 }
 
-void cas::HttpResponse::__set_client_fd(const int clientFd)
+void HttpResponse::__set_client_fd(const int clientFd)
 {
     _clientFd = clientFd;
 }
 
-int cas::HttpResponse::__get_client_fd() const
+int HttpResponse::__get_client_fd() const
 {
     return _clientFd;
 }
+
+#pragma endregion
