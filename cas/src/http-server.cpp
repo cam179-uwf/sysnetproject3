@@ -221,9 +221,12 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
 
             result.request.set_body(body);
         }
-        catch (const std::exception& ex) 
+        catch (const std::exception& ex)
         {
-            std::cerr << "Did not get content length from client." << std::endl;
+            if (VERBOSE_DEBUG)
+            {
+                std::cerr << "Did not get content length from client." << std::endl;
+            }
         }
     }
 

@@ -24,7 +24,7 @@ void signup(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 
     if (response.statusCode == 200)
     {
@@ -51,7 +51,7 @@ void login(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 
     if (response.statusCode == 200)
     {
@@ -69,7 +69,7 @@ void logout(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
 void change_password(cas::HttpClient &client)
@@ -92,7 +92,7 @@ void change_password(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
 
@@ -110,7 +110,7 @@ void subscribe(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
 
@@ -128,7 +128,7 @@ void unsubscribe(cas::HttpClient &client)
 
     auto response = client.post_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
 void get_my_locations(cas::HttpClient &client)
@@ -139,7 +139,7 @@ void get_my_locations(cas::HttpClient &client)
 
     auto response = client.get_async(request).get();
 
-    std::cout << response.to_string() << std::endl;
+    std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
 bool is_logged_in(cas::HttpClient &client)
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
                 std::cout << "3: subscribe to a location" << std::endl;
                 std::cout << "4: unsubscribe from a location" << std::endl;
                 std::cout << "5: get locations" << std::endl;
-                std::cout << "Pick an option: " << std::endl;
+                std::cout << "Pick an option or type (exit): ";
 
                 std::string optionStr;
                 int option = 0;
@@ -198,9 +198,9 @@ int main(int argc, char **argv)
             }
             else
             {
-                std::cout << "1: sign up" << std::endl;
+                std::cout << "1: register" << std::endl;
                 std::cout << "2: log in" << std::endl;
-                std::cout << "Pick an option: " << std::endl;
+                std::cout << "Pick an option or type (exit): ";
 
                 std::string optionStr;
                 int option = 0;

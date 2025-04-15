@@ -13,9 +13,12 @@ WeatherService g_Service;
 
 void handle_context(cas::HttpServerContext& ctx)
 {
-    std::cout << "=======================================" << std::endl;
-    std::cout << ctx.request.to_string() << std::endl;
-    std::cout << "=======================================" << std::endl;
+    if (VERBOSE_DEBUG)
+    {
+        std::cout << "=======================================" << std::endl;
+        std::cout << ctx.request.to_string() << std::endl;
+        std::cout << "=======================================" << std::endl;
+    }
 
     if (ctx.request.get_method() == "POST" && ctx.request.get_path() == "/signup")
     {

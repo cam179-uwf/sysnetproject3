@@ -272,7 +272,10 @@ HttpClientResponse HttpClient::make_request(const std::string& method, const Htt
         }
         catch (const std::exception& ex) 
         {
-            std::cerr << "Did not get content length from server." << std::endl;
+            if (VERBOSE_DEBUG)
+            {
+                std::cerr << "Did not get content length from server." << std::endl;
+            }
         }
     }
 
