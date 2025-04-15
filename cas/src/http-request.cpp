@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino, Ryan Waddington
+ * 4/7/2025
+ * 
+ * For handling HTTP requests.
+ */
+
 #include "../libs/http-request.hpp"
 
 #include <sstream>
@@ -64,14 +71,14 @@ std::string cas::HttpRequest::to_string() const
 {
     std::ostringstream oss;
 
-    oss << method << " " << path << " " << protocol << std::endl;
+    oss << method << " " << path << " " << protocol << "\r\n";
 
     for (auto header : headers)
     {
-        oss << header.first << ": " << header.second << std::endl;
+        oss << header.first << ": " << header.second << "\r\n";
     }
 
-    oss << std::endl;
+    oss << "\r\n";
     oss << body;
 
     return oss.str();

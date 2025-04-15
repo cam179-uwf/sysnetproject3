@@ -57,7 +57,7 @@ void handle_context(cas::HttpServerContext& ctx)
         std::cout << "Did nothing with the context" << std::endl;
 
         ctx.response.set_status(cas::HttpStatus::InternalServerError);
-        ctx.sendoff_close_async().get();
+        ctx.send_response_and_close_async().get();
     }
 }
 

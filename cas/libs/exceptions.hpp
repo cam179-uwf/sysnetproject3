@@ -11,7 +11,7 @@
 
 #include <stdexcept>
 
-#define VERBOSE_DEBUG true
+#define VERBOSE_DEBUG false
 
 namespace cas
 {

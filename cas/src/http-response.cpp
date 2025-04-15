@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino, Ryan Waddington
+ * 4/7/2025
+ * 
+ * For handling HTTP responses.
+ */
+
 #include "../libs/http-response.hpp"
 
 #include <sstream>
@@ -180,14 +187,14 @@ std::string HttpResponse::to_string()
 {
     std::ostringstream oss;
 
-    oss << protocol << " " << statusCode << " " << statusMessage << std::endl;
+    oss << protocol << " " << statusCode << " " << statusMessage << "\r\n";
 
     for (auto header : headers)
     {
-        oss << header.first << ": " << header.second << std::endl;
+        oss << header.first << ": " << header.second << "\r\n";
     }
 
-    oss << std::endl;
+    oss << "\r\n";
     oss << body;
 
     return oss.str();

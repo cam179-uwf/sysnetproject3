@@ -79,7 +79,7 @@ namespace cas
         void shutdown();
 
         /// @brief Check to see if a client file descriptor is closed. 
-        bool is_client_connection_closed(int clientFd);
+        bool is_client_connected(int clientFd);
 
         /// @brief Manually close a clients connection.
         void close_client_connection(int clientFd);
@@ -93,8 +93,8 @@ namespace cas
         HttpRequest request;
         HttpResponse response;
 
-        std::future<void> sendoff_async();
-        std::future<void> sendoff_close_async();
+        std::future<void> send_response_async();
+        std::future<void> send_response_and_close_async();
 
     private:
         bool _wasSent = false;

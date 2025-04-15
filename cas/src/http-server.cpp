@@ -316,17 +316,17 @@ void cas::HttpServer::shutdown()
     close(_serverFd);
 }
 
-bool cas::HttpServer::is_client_connection_closed(int clientFd)
+bool cas::HttpServer::is_client_connected(int clientFd)
 {
     for (auto fd : _fds)
     {
         if (fd.fd == clientFd)
         {
-            return false;
+            return true;
         }
     }
 
-    return true;
+    return false;
 }
 
 void cas::HttpServer::close_client_connection(int clientFd)
@@ -349,12 +349,13 @@ void cas::HttpServer::close_client_connection(int clientFd)
     }
 }
 
-std::future<void> HttpServerContext::sendoff_async()
+std::future<void> HttpServerContext::send_response_async()
 {
-    if (_wasSent) throw std::runtime_error("[sendoff_async] Policy dictates that their can only be one response sent per context.");
+    if (_wasSent) throw std::runtime_error("[send_response_async] Policy dictates that their can only be one response sent per context.");
     _wasSent = true;
     
     return std::async([this]() {
+        response.headers["Content-Length"] = std::to_string(response.body.size());
         std::string content(response.to_string());
 
         if (VERBOSE_DEBUG)
@@ -388,12 +389,12 @@ std::future<void> HttpServerContext::sendoff_async()
     });
 }
 
-std::future<void> HttpServerContext::sendoff_close_async()
+std::future<void> HttpServerContext::send_response_and_close_async()
 {
-    if (_wasSent) throw std::runtime_error("[sendoff_close_async] Policy dictates that their can only be one response sent per context.");
+    if (_wasSent) throw std::runtime_error("[send_response_and_close_async] Policy dictates that their can only be one response sent per context.");
 
     return std::async([this]() {
-        sendoff_async().get();
+        send_response_async().get();
 
         // WARNING: this could fail if the pointer is dereferenced before this is called
         server->close_client_connection(fd);

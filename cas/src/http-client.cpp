@@ -22,9 +22,12 @@ using namespace cas;
 
 std::string build_http_request_str(const std::string& method, const HttpRequest& request)
 {
-    std::map<std::string, std::string> headers = request.headers;
-    headers["Content-Length"] = std::to_string(request.body.size());
-    return request.to_string();
+    HttpRequest copy(request);
+
+    copy.method = method;
+    copy.headers["Content-Length"] = std::to_string(copy.body.size());
+    
+    return copy.to_string();
 }
 
 HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)

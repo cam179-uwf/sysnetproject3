@@ -1,3 +1,10 @@
+/**
+ * Christian Marcellino, Ryan Waddington
+ * 4/7/2025
+ * 
+ * For handling HTTP responses.
+ */
+
 #ifndef H_HTTP_RESPONSE
 #define H_HTTP_RESPONSE
 
@@ -45,7 +52,7 @@ namespace cas
         int statusCode = 200;
         std::string statusMessage = "Success";
         std::map<std::string, std::string> headers;
-        std::string body;
+        std::string body = "";
 
         void init_from_raw_http_header(const std::string& rawHttpHeader);
         void set_status(const HttpStatus& status);
