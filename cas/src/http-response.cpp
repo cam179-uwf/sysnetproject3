@@ -1,6 +1,7 @@
 /**
+ * System & Networks II (COP4635)
  * Christian Marcellino, Ryan Waddington
- * 4/7/2025
+ * 4/15/2025
  * 
  * For handling HTTP responses.
  */
@@ -58,6 +59,22 @@ void HttpResponse::init_from_raw_http_header(const std::string& rawHttpHeader)
 
         std::getline(iss, header);
     }
+}
+
+bool cas::HttpResponse::headers_contain(const std::string& key) const
+{
+    return headers.find(key) != headers.end();
+}
+
+bool cas::HttpResponse::try_get_header(const std::string& key, std::string& outValue)
+{
+    if (headers_contain(key))
+    {
+        outValue = headers[key];
+        return true;
+    }
+
+    return false;
 }
 
 void HttpResponse::set_status(const HttpStatus& status)

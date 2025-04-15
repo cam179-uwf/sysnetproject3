@@ -1,4 +1,5 @@
 /**
+ * System & Networks II (COP4635)
  * Christian Marcellino, Ryan Waddington
  * 4/15/2025
  * 
@@ -34,14 +35,19 @@ void WeatherService::authenticate(cas::HttpServerContext &ctx)
         if (data.size() > 1)
         {
             bearer = data[1];
-            std::cout << "Client sent their bearer token: " << bearer << std::endl;
+
+            std::cout << std::endl;
+            std::cout << "Client tried authorizing with bearer: " << bearer << std::endl;
 
             if (_sessions.find(bearer) != _sessions.end())
             {
+                std::cout << "Client is authorized." << std::endl;
                 _isAuthenticated = true;
                 _bearer = bearer;
                 _sessions[bearer].fd = ctx.fd;
             }   
+
+            std::cout << std::endl;
         }
     }
 }
@@ -53,7 +59,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("Username", userInfo.username) || is_whitespace(userInfo.username))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a username when signing up.";
+        ctx.response.body = "You must specify a username.";
         ctx.send_response_async().get();
         return;
     }
@@ -61,7 +67,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("Password", userInfo.password) || is_whitespace(userInfo.password))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a password when signing up.";
+        ctx.response.body = "You must specify a password.";
         ctx.send_response_async().get();
         return;
     }
@@ -71,7 +77,7 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
         if (user.username == userInfo.username)
         {
             ctx.response.set_status(cas::HttpStatus::BadRequest);
-            ctx.response.body = "Username already exists";
+            ctx.response.body = "That username already exists.";
             ctx.send_response_async().get();
             return;
         }
@@ -86,10 +92,11 @@ void WeatherService::sign_up(cas::HttpServerContext &ctx)
     ctx.response.headers["Authorization"] = "Bearer " + token;
     ctx.send_response_async().get();
 
-    std::cout << "Signed up a user." << std::endl;
+    std::cout << std::endl;
+    std::cout << "Registered a user." << std::endl;
     std::cout << "Username: " << userInfo.username << std::endl;
     std::cout << "Password: " << userInfo.password << std::endl;
-    std::cout << "Bearer Token: " << token << std::endl;
+    std::cout << std::endl;
     return;
 }
 
@@ -100,7 +107,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("Username", userInfo.username) || is_whitespace(userInfo.username))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a username when login.";
+        ctx.response.body = "You must specify a username.";
         ctx.send_response_async().get();
         return;
     }
@@ -108,7 +115,7 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("Password", userInfo.password) || is_whitespace(userInfo.password))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a password when login.";
+        ctx.response.body = "You must specify a password.";
         ctx.send_response_async().get();
         return;
     }
@@ -123,16 +130,17 @@ void WeatherService::log_in(cas::HttpServerContext &ctx)
             ctx.response.headers["Authorization"] = "Bearer " + token;
             ctx.send_response_async().get();
 
-            std::cout << "Logged in a user." << std::endl;
+            std::cout << std::endl;
+            std::cout << "Logged in user." << std::endl;
             std::cout << "Username: " << userInfo.username << std::endl;
             std::cout << "Password: " << userInfo.password << std::endl;
-            std::cout << "Bearer Token: " << token << std::endl;
+            std::cout << std::endl;
             return;
         }
     }
 
     ctx.response.set_status(cas::HttpStatus::BadRequest);
-    ctx.response.body = "Credentials are INVALID";
+    ctx.response.body = "Your credentials are invalid.";
     ctx.send_response_async().get();
 }
 
@@ -143,7 +151,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     if (!_isAuthenticated)
     {
         ctx.response.set_status(cas::HttpStatus::Unauthorized);
-        ctx.response.body = "You must be logged in to log out you idiot.";
+        ctx.response.body = "You are not logged in.";
         ctx.send_response_async().get();
         return;
     }
@@ -153,7 +161,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("Authorization", bearer) || is_whitespace(bearer))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a bearer when logging out.";
+        ctx.response.body = "You must specify a bearer token.";
         ctx.send_response_async().get();
         return;
     }
@@ -167,7 +175,7 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     else
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include a bearer when logging out.";
+        ctx.response.body = "You must specify a properly formatted bearer token.";
         ctx.send_response_async().get();
         return;
     }
@@ -175,16 +183,23 @@ void WeatherService::log_out(cas::HttpServerContext &ctx)
     if (_sessions.find(bearer) != _sessions.end())
     {
         auto user = _sessions[bearer];
+        _sessions.erase(bearer);
+
+        std::cout << std::endl;
         std::cout << "Logged out a user." << std::endl;
         std::cout << "Username: " << user.username << std::endl;
         std::cout << "Password: " << user.password << std::endl;
-        std::cout << "Bearer Token: " << bearer << std::endl;
-        _sessions.erase(bearer);
+        std::cout << "Bearer: " << bearer << std::endl;
+        std::cout << std::endl;
+
+        ctx.response.body = "Logged you out.";
+        ctx.send_response_async().get();
+        return;
     }
 
-    ctx.response.body = "Logged you out.";
+    ctx.response.set_status(cas::HttpStatus::NotFound);
+    ctx.response.body += ": could not find the logged in user.";
     ctx.send_response_async().get();
-    return;
 }
 
 void WeatherService::is_logged_in(cas::HttpServerContext &ctx)
@@ -220,7 +235,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("oldpassword", oldPassword) || is_whitespace(oldPassword))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include the oldpassword header when changing your password.";
+        ctx.response.body = "You must specify your old password.";
         ctx.send_response_async().get();
         return;
     }
@@ -228,7 +243,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("newpassword", newPassword) || is_whitespace(newPassword))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include the newpassword header when changing your password.";
+        ctx.response.body = "You must specify your new password.";
         ctx.send_response_async().get();
         return;
     }
@@ -246,7 +261,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
         }
 
         ctx.response.set_status(cas::HttpStatus::OK);
-        ctx.response.body = "Password changed successfully.";
+        ctx.response.body = "Your password was changed successfully.";
         ctx.send_response_async().get();
 
         save_file(_users);
@@ -254,7 +269,7 @@ void WeatherService::change_password(cas::HttpServerContext &ctx)
     }
     
     ctx.response.set_status(cas::HttpStatus::BadRequest);
-    ctx.response.body = "Old password did not match.";
+    ctx.response.body = "The old password specified did not match your original password.";
     ctx.send_response_async().get();
 }
 
@@ -274,7 +289,7 @@ void WeatherService::subscribe(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("location", location) || is_whitespace(location))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include the location header when subscribing to a location.";
+        ctx.response.body = "You must specify a location.";
         ctx.send_response_async().get();
         return;
     }
@@ -282,6 +297,7 @@ void WeatherService::subscribe(cas::HttpServerContext &ctx)
     _sessions[_bearer].locations.push_back(location);
 
     ctx.response.set_status(cas::HttpStatus::OK);
+    ctx.response.body = "Successfully subscribed to: " + location;
     ctx.send_response_async().get();
     return;
 }
@@ -302,7 +318,7 @@ void WeatherService::unsubscribe(cas::HttpServerContext &ctx)
     if (!ctx.request.try_get_header("location", location) || is_whitespace(location))
     {
         ctx.response.set_status(cas::HttpStatus::BadRequest);
-        ctx.response.body = "You must include the location header when unsubscribing to a location.";
+        ctx.response.body = "You must specify a location.";
         ctx.send_response_async().get();
         return;
     }
@@ -314,13 +330,14 @@ void WeatherService::unsubscribe(cas::HttpServerContext &ctx)
             _sessions[_bearer].locations.erase(_sessions[_bearer].locations.begin() + i);
 
             ctx.response.set_status(cas::HttpStatus::OK);
+            ctx.response.body = "Successfully unsubscribed from: " + location;
             ctx.send_response_async().get();
             return;
         }
     }
 
     ctx.response.set_status(cas::HttpStatus::BadRequest);
-    ctx.response.body = "The location you tried to remove doesn't exist.";
+    ctx.response.body = "No location removed. It wasn't in your subscribed list of locations.";
     ctx.send_response_async().get();
     return;
 }
@@ -337,7 +354,7 @@ void WeatherService::get_locations(cas::HttpServerContext &ctx)
     }
 
     ctx.response.set_status(cas::HttpStatus::OK);
-    ctx.response.body = "The locations you are subscribed to:\n" + _sessions[_bearer].locations_to_string();
+    ctx.response.body = _sessions[_bearer].locations_to_string();
     ctx.send_response_async().get();
     return;
 }

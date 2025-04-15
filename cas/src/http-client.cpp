@@ -1,4 +1,5 @@
 /**
+ * System & Networks II (COP4635)
  * Christian Marcellino, Ryan Waddington
  * 4/7/2025
  * 
@@ -32,7 +33,15 @@ std::string build_http_request_str(const std::string& method, const HttpRequest&
 
 HttpClient::HttpClient(const std::string& host, const int port, const int bufferSize)
 {
-    _host = host;
+    if (host == "localhost")
+    {
+        _host = "127.0.0.1";
+    }
+    else
+    {
+        _host = host;
+    }
+
     _port = port;
     _bufferSize = bufferSize;
 

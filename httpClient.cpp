@@ -3,7 +3,7 @@
 
 #include "cas/libs/http-client.hpp"
 
-cas::HttpClient g_Client("127.0.0.1", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
+cas::HttpClient g_Client("localhost", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
 std::string g_Bearer;
 
 void signup()
@@ -138,7 +138,8 @@ void get_my_locations()
 
     auto response = g_Client.get_async(request).get();
 
-    std::cout << "\n" << response.body << "\n" << std::endl;
+    std::cout << "\nLocations you are subscribed to:" << std::endl;
+    std::cout << response.body << "\n" << std::endl;
 }
 
 bool is_logged_in()
@@ -165,6 +166,7 @@ int main(int argc, char **argv)
                 std::cout << "3: subscribe to a location" << std::endl;
                 std::cout << "4: unsubscribe from a location" << std::endl;
                 std::cout << "5: get locations" << std::endl;
+                std::cout << "0: quit" << std::endl;
                 std::cout << "Pick an option or type (exit): ";
 
                 std::string optionStr;
@@ -191,12 +193,15 @@ int main(int argc, char **argv)
                     break;
                 case 5: get_my_locations();
                     break;
+                case 0: exit(0);
+                    break;
                 }
             }
             else
             {
                 std::cout << "1: register" << std::endl;
                 std::cout << "2: log in" << std::endl;
+                std::cout << "0: quit" << std::endl;
                 std::cout << "Pick an option or type (exit): ";
 
                 std::string optionStr;
@@ -216,6 +221,8 @@ int main(int argc, char **argv)
                 case 1: signup();
                     break;
                 case 2: login();
+                    break;
+                case 0: exit(0);
                     break;
                 }
             }

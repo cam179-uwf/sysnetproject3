@@ -1,4 +1,5 @@
 /**
+ * System & Networks II (COP4635)
  * Christian Marcellino, Ryan Waddington
  * 4/7/2025
  * 
@@ -251,6 +252,7 @@ bool cas::HttpServer::handleRead(int clientFd, size_t& fdIndex, HttpServerContex
 void HttpServer::handleAccept()
 {
     int clientFd = accept(_serverFd, (sockaddr *)&_address, (socklen_t *)&_addrlen);
+    OnOpenClientConnection(clientFd);
 
     if (VERBOSE_DEBUG)
     {

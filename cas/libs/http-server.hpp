@@ -1,4 +1,5 @@
 /**
+ * System & Networks II (COP4635)
  * Christian Marcellino, Ryan Waddington
  * 4/7/2025
  * 
@@ -55,6 +56,9 @@ namespace cas
         void handleAccept();
 
     public:
+        /// @brief A callback for capturing when a client connection is opened.
+        std::function<void(int clientFd)> OnOpenClientConnection;
+
         /// @brief A callback for capturing when a client connection is closed.
         std::function<void(int clientFd)> OnCloseClientConnection;
 

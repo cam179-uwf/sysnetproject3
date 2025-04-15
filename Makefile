@@ -8,10 +8,10 @@ test1: tests/test1.cpp
 	./test1
 
 server: httpServer.cpp helpers.o user-info.o weather-service.o
-	g++ $(ARGS) $^ $(LIBS) -o server
+	g++ $(ARGS) -pthread $^ $(LIBS) -o server
 
 client: httpClient.cpp
-	g++ $(ARGS) $< $(LIBS) -o client
+	g++ $(ARGS) -pthread $< $(LIBS) -o client
 
 helpers.o: src/helpers.cpp
 	g++ $(ARGS) -c $<
