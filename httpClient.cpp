@@ -3,9 +3,10 @@
 
 #include "cas/libs/http-client.hpp"
 
-std::string bearer;
+cas::HttpClient g_Client("127.0.0.1", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
+std::string g_Bearer;
 
-void signup(cas::HttpClient &client)
+void signup()
 {
     std::cout << "Type username: ";
 
@@ -22,17 +23,17 @@ void signup(cas::HttpClient &client)
     request.headers["Username"] = username;
     request.headers["Password"] = password;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 
     if (response.statusCode == 200)
     {
-        bearer = response.headers["Authorization"];
+        g_Bearer = response.headers["Authorization"];
     }
 }
 
-void login(cas::HttpClient &client)
+void login()
 {
     std::cout << "Type username: ";
 
@@ -49,30 +50,30 @@ void login(cas::HttpClient &client)
     request.headers["Username"] = username;
     request.headers["Password"] = password;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 
     if (response.statusCode == 200)
     {
-        bearer = response.headers["Authorization"];
+        g_Bearer = response.headers["Authorization"];
     }
 }
 
-void logout(cas::HttpClient &client)
+void logout()
 {
     std::cout << "Type username: ";
 
     cas::HttpRequest request;
     request.path = "/logout";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
-void change_password(cas::HttpClient &client)
+void change_password()
 {
     std::cout << "Type old password: ";
     
@@ -86,17 +87,16 @@ void change_password(cas::HttpClient &client)
 
     cas::HttpRequest request;
     request.path = "/changepassword";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
     request.headers["oldpassword"] = oldpassword;
     request.headers["newpassword"] = newpassword;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
-
-void subscribe(cas::HttpClient &client)
+void subscribe()
 {
     std::cout << "Type a location: ";
     
@@ -105,16 +105,15 @@ void subscribe(cas::HttpClient &client)
 
     cas::HttpRequest request;
     request.path = "/subscribe";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
     request.headers["location"] = location;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
-
-void unsubscribe(cas::HttpClient &client)
+void unsubscribe()
 {
     std::cout << "Type a location: ";
     
@@ -123,45 +122,43 @@ void unsubscribe(cas::HttpClient &client)
 
     cas::HttpRequest request;
     request.path = "/unsubscribe";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
     request.headers["location"] = location;
 
-    auto response = client.post_async(request).get();
+    auto response = g_Client.post_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
-void get_my_locations(cas::HttpClient &client)
+void get_my_locations()
 {
     cas::HttpRequest request;
     request.path = "/getlocations";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
 
-    auto response = client.get_async(request).get();
+    auto response = g_Client.get_async(request).get();
 
     std::cout << "\n" << response.body << "\n" << std::endl;
 }
 
-bool is_logged_in(cas::HttpClient &client)
+bool is_logged_in()
 {
     cas::HttpRequest request;
     request.path = "/amiloggedin";
-    request.headers["Authorization"] = bearer;
+    request.headers["Authorization"] = g_Bearer;
 
-    auto response = client.get_async(request).get();
+    auto response = g_Client.get_async(request).get();
 
     return response.statusCode == 200;
 }
 
 int main(int argc, char **argv)
 {
-    cas::HttpClient client("127.0.0.1", 60001, DEFAULT_CLIENT_BUFFER_SIZE);
-
     while (true)
     {
         try 
         {
-            if (bearer != "" && is_logged_in(client))
+            if (g_Bearer != "" && is_logged_in())
             {
                 std::cout << "1: log out" << std::endl;
                 std::cout << "2: change password" << std::endl;
@@ -184,15 +181,15 @@ int main(int argc, char **argv)
 
                 switch (option)
                 {
-                case 1: logout(client);
+                case 1: logout();
                     break;
-                case 2: change_password(client);
+                case 2: change_password();
                     break;
-                case 3: subscribe(client);
+                case 3: subscribe();
                     break;
-                case 4: unsubscribe(client);
+                case 4: unsubscribe();
                     break;
-                case 5: get_my_locations(client);
+                case 5: get_my_locations();
                     break;
                 }
             }
@@ -216,9 +213,9 @@ int main(int argc, char **argv)
 
                 switch (option)
                 {
-                case 1: signup(client);
+                case 1: signup();
                     break;
-                case 2: login(client);
+                case 2: login();
                     break;
                 }
             }
